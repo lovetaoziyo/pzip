@@ -10,6 +10,21 @@ permissions:
   contents: write
 
 jobs:
+  check-com-server:
+    name: Check COM server
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: com-server
+      - name: Check COM server
+        run: cargo check --manifest-path com-server/Cargo.toml
+
   build-windows:
     name: Windows (x64)
     runs-on: windows-latest
