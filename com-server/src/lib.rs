@@ -11,8 +11,8 @@ use windows::Win32::Foundation::BOOL;
 use windows::Win32::System::Com::{CoTaskMemAlloc, IBindCtx, IClassFactory, IClassFactory_Impl};
 use windows::Win32::System::Registry::{RegGetValueW, HKEY_CURRENT_USER, RRF_RT_REG_SZ};
 use windows::Win32::UI::Shell::{
-    EXPCMDFLAGS, EXPCMDSTATE, IEnumExplorerCommand, IExplorerCommand, IExplorerCommand_Impl,
-    IShellItemArray, SIGDN_FILESYSPATH,
+    IEnumExplorerCommand, IExplorerCommand, IExplorerCommand_Impl, IShellItemArray,
+    SIGDN_FILESYSPATH,
 };
 
 // One CLSID per verb (the manifest maps each Verb -> Clsid).
@@ -44,7 +44,6 @@ fn alloc_pwstr(s: &str) -> PWSTR {
 
 fn read_pzip_exe() -> Option<String> {
     // The app writes its own path here during shell registration.
-    let mut out_type = 0u32;
     let mut buf = vec![0u16; 1024];
     let mut len = (buf.len() * std::mem::size_of::<u16>()) as u32;
     let hr = unsafe {
@@ -53,7 +52,7 @@ fn read_pzip_exe() -> Option<String> {
             windows::core::w!("Software\\PZip"),
             windows::core::w!("ExePath"),
             RRF_RT_REG_SZ,
-            Some(&mut out_type),
+            None,
             Some(buf.as_mut_ptr() as *mut c_void),
             Some(&mut len),
         )
@@ -105,8 +104,8 @@ impl IExplorerCommand_Impl for Command {
         &self,
         _items: Option<&IShellItemArray>,
         _ok: BOOL,
-    ) -> windows::core::Result<EXPCMDSTATE> {
-        Ok(Default::default()) // ECS_ENABLED
+    ) -> windows::core::Result<u32> {
+        Ok(0) // ECS_ENABLED
     }
 
     fn Invoke(
@@ -129,8 +128,8 @@ impl IExplorerCommand_Impl for Command {
         Ok(())
     }
 
-    fn GetFlags(&self) -> windows::core::Result<EXPCMDFLAGS> {
-        Ok(Default::default())
+    fn GetFlags(&self) -> windows::core::Result<u32> {
+        Ok(0)
     }
 
     fn EnumSubCommands(&self) -> windows::core::Result<IEnumExplorerCommand> {
