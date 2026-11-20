@@ -33,6 +33,7 @@ pub struct ProgressInfo {
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CompressOptions {
     /// Archive format: "7z", "zip", "tar", "wim", "xz", "bzip2", "gzip", ...
     pub format: String,

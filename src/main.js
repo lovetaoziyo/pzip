@@ -97,6 +97,11 @@ function extOf(name) {
   return i > 0 ? name.slice(i + 1).toLowerCase() : "";
 }
 
+function basename(p) {
+  const parts = String(p || "").split(/[\\/]/);
+  return parts[parts.length - 1];
+}
+
 function typeOf(name, isDir) {
   if (isDir) return t("folder");
   const e = extOf(name);
@@ -187,6 +192,9 @@ function render() {
   els.emptyState.classList.toggle("hidden", state.entries.length > 0);
 
   for (const entry of state.entries) {
+    const name = entry.name ?? basename(entry.path);
+    const isDir = entry.is_dir ?? entry.folder ?? false;
+
     const tr = document.createElement("tr");
     if (state.selection.has(entry.path)) tr.classList.add("selected");
 
@@ -194,16 +202,16 @@ function render() {
     tdName.className = "col-name";
     const fname = document.createElement("div");
     fname.className = "fname";
-    fname.innerHTML = `<span class="f-icon">${iconOf(entry.name, entry.is_dir ?? entry.folder)}</span><span>${escapeHtml(entry.name)}</span>${entry.encrypted ? '<span class="enc-badge">AES</span>' : ""}`;
+    fname.innerHTML = `<span class="f-icon">${iconOf(name, isDir)}</span><span>${escapeHtml(name)}</span>${entry.encrypted ? '<span class="enc-badge">AES</span>' : ""}`;
     tdName.appendChild(fname);
 
     const tdSize = document.createElement("td");
     tdSize.className = "col-size";
-    tdSize.textContent = (entry.is_dir ?? entry.folder) ? "" : fmtSize(entry.size);
+    tdSize.textContent = isDir ? "" : fmtSize(entry.size);
 
     const tdType = document.createElement("td");
     tdType.className = "col-type";
-    tdType.textContent = entry.is_dir != null ? typeOf(entry.name, entry.is_dir) : (entry.folder ? t("folder") : typeOf(entry.name, false));
+    tdType.textContent = typeOf(name, isDir);
 
     const tdDate = document.createElement("td");
     tdDate.className = "col-date";
