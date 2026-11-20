@@ -117,14 +117,13 @@ function typeOf(name, isDir) {
 }
 
 function iconOf(name, isDir) {
-  if (isDir) return "📁";
-  const e = extOf(name);
-  if (ARCHIVE_EXTS.includes(e)) return "🗜️";
-  if (["txt", "md", "log", "json", "js", "css", "html", "ini"].includes(e)) return "📄";
-  if (["png", "jpg", "jpeg", "gif", "bmp", "svg", "webp"].includes(e)) return "🖼️";
-  if (["exe", "dll", "msi", "bat"].includes(e)) return "⚙️";
-  if (["mp3", "wav", "flac", "mp4", "mkv", "avi"].includes(e)) return "🎵";
-  return "📄";
+  if (isDir) {
+    return '<svg viewBox="0 0 16 16" width="16" height="16" fill="#f59e0b"><path d="M2 4.5A1.5 1.5 0 0 1 3.5 3h2.6l1.5 2H13a1 1 0 0 1 1 1v6.5A1.5 1.5 0 0 1 12.5 14h-9A1.5 1.5 0 0 1 2 12.5z"/></svg>';
+  }
+  if (ARCHIVE_EXTS.includes(extOf(name))) {
+    return '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="#4f46e5" stroke-width="1.4"><rect x="2.5" y="2.5" width="11" height="11" rx="1.5"/><line x1="6" y1="6.5" x2="10" y2="6.5"/><line x1="6" y1="10" x2="10" y2="10"/></svg>';
+  }
+  return '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="#9ca3af" stroke-width="1.4" stroke-linejoin="round"><path d="M4 2h5l3 3v9H4z"/><path d="M9 2v3h3"/></svg>';
 }
 
 function isArchiveName(name) {
@@ -455,23 +454,21 @@ function handleDropped(paths) {
   }
 }
 
-/* ===== Startup args (right-click integration) ===== */
-async function handleStartupArgs() {
-  try {
-    const args = await invoke("get_startup_args");
-    if (!args.length) return;
-    if (args.includes("--add") && args[args.length - 1]) {
-      openCompressDialog([args[args.length - 1]]);
-    } else if (args.includes("--extract-here") && args[args.length - 1]) {
-      const p = args[args.length - 1];
-      const dir = p.replace(/[\\/][^\\/]+$/, "");
-      invoke("extract", { archive: p, dest: dir, password: null, overwrite: true }).catch((e) => toast(e, true));
-    } else if (args.includes("--extract-to") && args[args.length - 1]) {
-      const p = args[args.length - 1];
-      const dir = p.replace(/\.[^.]+$/, "") + "\\";
-      invoke("extract", { archive: p, dest: dir, password: null, overwrite: true }).catch((e) => toast(e, true));
-    }
-  } catch (_) {}
+/* ===== CLI args (right-click / file association) ===== */
+function handleArgs(args) {
+  if (!args || !args.length) return;
+  const last = args[args.length - 1];
+  if (args.includes("--add") && last) {
+    openCompressDialog([last]);
+  } else if (args.includes("--extract-here") && last) {
+    invoke("extract", { archive: last, dest: last.replace(/[\\/][^\\/]+$/, ""), password: null, overwrite: true }).catch((e) => toast(e, true));
+  } else if (args.includes("--extract-to") && last) {
+    invoke("extract", { archive: last, dest: last.replace(/\.[^.]+$/, "") + "\\", password: null, overwrite: true }).catch((e) => toast(e, true));
+  } else if (last && !last.startsWith("-")) {
+    // File association: double-clicked an archive (or a folder) in Explorer.
+    if (isArchiveName(basename(last))) openArchive(last);
+    else navigate(last);
+  }
 }
 
 /* ===== Wire up UI ===== */
@@ -538,6 +535,16 @@ async function init() {
   applyI18n();
   await initProgressListener();
   await initDrop();
+  await listen("cli://args", (e) => handleArgs(e.payload));
+
+  // Auto-register Explorer context menu + file association on first launch.
+  try {
+    const on = await invoke("is_shell_registered");
+    if (!on) {
+      await invoke("register_shell");
+      toast(t("shellOn"));
+    }
+  } catch (_) {}
   refreshShellState();
 
   try {
@@ -549,7 +556,7 @@ async function init() {
   let start = "C:\\";
   try { start = await homeDir(); } catch (_) {}
   await navigate(start);
-  handleStartupArgs();
+  handleArgs(await invoke("get_startup_args").catch(() => []));
 }
 
 init();

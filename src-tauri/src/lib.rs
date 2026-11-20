@@ -2,6 +2,8 @@ mod commands;
 mod sevenzip;
 mod shell;
 
+use tauri::Emitter;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let startup = commands::StartupArgs(std::sync::Mutex::new(
@@ -10,6 +12,10 @@ pub fn run() {
     tauri::Builder::default()
         .manage(startup)
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
+            // A second launch (e.g. Explorer right-click) forwards its args here.
+            let _ = app.emit("cli://args", argv);
+        }))
         .invoke_handler(tauri::generate_handler![
             commands::get_engine_info,
             commands::get_startup_args,

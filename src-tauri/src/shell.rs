@@ -1,15 +1,17 @@
-//! Windows Explorer right-click integration via HKCU registry keys.
-//! HKCU (not HKLM) means no elevation is required.
+//! Windows Explorer integration via HKCU registry keys (no elevation required):
+//!   - classic context menu ("添加到压缩包" on files/folders, extract on archives)
+//!   - file association (.7z/.zip/... double-click opens PZip)
 
 use winreg::enums::HKEY_CURRENT_USER;
 use winreg::RegKey;
 
 const ADD_KEY: &str = r"Software\Classes\*\shell\PZip";
 const DIR_KEY: &str = r"Software\Classes\Directory\shell\PZip";
+const PROGID: &str = "PZip.Archive";
 
 const ARCHIVE_EXTS: &[&str] = &[
     "7z", "zip", "rar", "tar", "gz", "bz2", "xz", "wim", "iso", "cab", "arj", "lzh", "z", "tgz",
-    "tbz", "txz", "7z.001", "zip.001",
+    "tbz", "txz",
 ];
 
 pub fn register() -> Result<(), String> {
@@ -18,7 +20,7 @@ pub fn register() -> Result<(), String> {
         .to_string_lossy()
         .to_string();
 
-    // "Add to archive" for files and folders.
+    // 1. "Add to archive" on files and folders.
     set_value(ADD_KEY, "", "添加到压缩包 (PZip)")?;
     set_value(ADD_KEY, "Icon", &exe)?;
     set_value(&format!("{ADD_KEY}\\command"), "", &format!("\"{exe}\" --add \"%1\""))?;
@@ -27,24 +29,31 @@ pub fn register() -> Result<(), String> {
     set_value(DIR_KEY, "Icon", &exe)?;
     set_value(&format!("{DIR_KEY}\\command"), "", &format!("\"{exe}\" --add \"%1\""))?;
 
-    // "Extract here" / "Extract to folder" on archive files.
-    for ext in ARCHIVE_EXTS {
-        let base = format!(r"Software\Classes\.{ext}\shell");
-        set_value(&format!("{base}\\PZipExtractHere"), "", "解压到当前文件夹 (PZip)")?;
-        set_value(&format!("{base}\\PZipExtractHere"), "Icon", &exe)?;
-        set_value(
-            &format!("{base}\\PZipExtractHere\\command"),
-            "",
-            &format!("\"{exe}\" --extract-here \"%1\""),
-        )?;
+    // 2. ProgID for archive files: open + extract context menu.
+    let base = format!("Software\\Classes\\{PROGID}");
+    set_value(&base, "", "PZip 压缩包")?;
+    set_value(&format!("{base}\\DefaultIcon"), "", &format!("{exe},0"))?;
+    set_value(&format!("{base}\\shell\\open\\command"), "", &format!("\"{exe}\" \"%1\""))?;
 
-        set_value(&format!("{base}\\PZipExtractTo"), "", "解压到文件夹 (PZip)")?;
-        set_value(&format!("{base}\\PZipExtractTo"), "Icon", &exe)?;
-        set_value(
-            &format!("{base}\\PZipExtractTo\\command"),
-            "",
-            &format!("\"{exe}\" --extract-to \"%1\""),
-        )?;
+    set_value(&format!("{base}\\shell\\PZipExtractHere"), "", "解压到当前文件夹 (PZip)")?;
+    set_value(&format!("{base}\\shell\\PZipExtractHere"), "Icon", &exe)?;
+    set_value(
+        &format!("{base}\\shell\\PZipExtractHere\\command"),
+        "",
+        &format!("\"{exe}\" --extract-here \"%1\""),
+    )?;
+
+    set_value(&format!("{base}\\shell\\PZipExtractTo"), "", "解压到文件夹 (PZip)")?;
+    set_value(&format!("{base}\\shell\\PZipExtractTo"), "Icon", &exe)?;
+    set_value(
+        &format!("{base}\\shell\\PZipExtractTo\\command"),
+        "",
+        &format!("\"{exe}\" --extract-to \"%1\""),
+    )?;
+
+    // 3. Associate each archive extension with the ProgID.
+    for ext in ARCHIVE_EXTS {
+        set_value(&format!(r"Software\Classes\.{ext}"), "", PROGID)?;
     }
     Ok(())
 }
@@ -53,11 +62,9 @@ pub fn unregister() -> Result<(), String> {
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
     let _ = hkcu.delete_subkey_all(ADD_KEY);
     let _ = hkcu.delete_subkey_all(DIR_KEY);
+    let _ = hkcu.delete_subkey_all(&format!("Software\\Classes\\{PROGID}"));
     for ext in ARCHIVE_EXTS {
-        for name in ["PZipExtractHere", "PZipExtractTo"] {
-            let key = format!(r"Software\Classes\.{ext}\shell\{name}");
-            let _ = hkcu.delete_subkey_all(&key);
-        }
+        clear_default(&format!(r"Software\Classes\.{ext}"));
     }
     Ok(())
 }
@@ -71,4 +78,11 @@ fn set_value(key: &str, name: &str, value: &str) -> Result<(), String> {
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
     let (k, _) = hkcu.create_subkey(key).map_err(|e| e.to_string())?;
     k.set_value(name, &value).map_err(|e| e.to_string())
+}
+
+fn clear_default(key: &str) {
+    let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+    if let Ok(k) = hkcu.open_subkey(key) {
+        let _ = k.delete_value("");
+    }
 }

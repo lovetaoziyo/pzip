@@ -155,6 +155,17 @@ body {
   background: var(--accent-hover);
 }
 
+.tb-btn svg {
+  width: 15px;
+  height: 15px;
+  flex: none;
+}
+
+#btnRefresh svg {
+  width: 14px;
+  height: 14px;
+}
+
 .spacer {
   flex: 1;
 }

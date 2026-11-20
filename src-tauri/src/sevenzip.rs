@@ -97,6 +97,7 @@ impl SevenZip {
         let mut child = self
             .base()
             .args(args)
+            .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
@@ -261,10 +262,12 @@ impl SevenZip {
 }
 
 fn push_password(args: &mut Vec<String>, password: Option<&str>) {
-    match password {
-        Some(p) if !p.is_empty() => args.push(format!("-p{p}")),
-        // Empty password: still pass "-p" so 7-Zip never prompts on stdin.
-        _ => args.push("-p".to_string()),
+    // Only pass -p when a non-empty password is given. A bare "-p" makes
+    // 7-Zip prompt interactively, which would hang the non-interactive call.
+    if let Some(p) = password {
+        if !p.is_empty() {
+            args.push(format!("-p{p}"));
+        }
     }
 }
 
