@@ -1,0 +1,25 @@
+[package]
+name = "pzip"
+version = "0.1.0"
+description = "PZip — a flat, modern file archiver built on 7-Zip"
+authors = ["taozi"]
+edition = "2021"
+rust-version = "1.77"
+
+[lib]
+name = "pzip_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+winreg = "0.52"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
