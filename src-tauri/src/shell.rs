@@ -70,5 +70,5 @@ pub fn is_registered() -> Result<bool, String> {
 fn set_value(key: &str, name: &str, value: &str) -> Result<(), String> {
     let hkcu = RegKey::predef(HKEY_CURRENT_USER);
     let (k, _) = hkcu.create_subkey(key).map_err(|e| e.to_string())?;
-    k.set_value(name, value).map_err(|e| e.to_string())
+    k.set_value(name, &value).map_err(|e| e.to_string())
 }

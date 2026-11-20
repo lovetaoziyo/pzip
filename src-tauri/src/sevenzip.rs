@@ -305,7 +305,7 @@ fn parse_listing(out: &str) -> Vec<ArchiveEntry> {
     let mut entries = Vec::new();
     let mut cur: Option<ArchiveEntry> = None;
 
-    let mut finish = |cur: &mut Option<ArchiveEntry>, entries: &mut Vec<ArchiveEntry>| {
+    let finish = |cur: &mut Option<ArchiveEntry>, entries: &mut Vec<ArchiveEntry>| {
         if let Some(e) = cur.take() {
             entries.push(e);
         }
