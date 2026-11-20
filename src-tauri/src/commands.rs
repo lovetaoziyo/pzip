@@ -129,8 +129,9 @@ pub fn benchmark(app: AppHandle) -> Result<String, String> {
 
 #[tauri::command]
 pub fn open_path(path: String) -> Result<(), String> {
+    let quoted = format!("\"{}\"", path);
     Command::new("cmd")
-        .args(["/C", "start", "", &format!("\"{}\"", path)])
+        .args(["/C", "start", "", quoted.as_str()])
         .spawn()
         .map_err(|e| e.to_string())?;
     Ok(())
