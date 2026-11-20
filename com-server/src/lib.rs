@@ -6,19 +6,13 @@
 
 use std::ffi::c_void;
 
-use windows::core::{implement, GUID, IUnknown, Interface, PWSTR, HSTRING};
+use windows::core::{implement, GUID, IUnknown, Interface, PCWSTR, PWSTR, HRESULT};
 use windows::Win32::Foundation::BOOL;
-use windows::Win32::System::Com::{
-    CoTaskMemAlloc, CoTaskMemFree, IClassFactory, IClassFactory_Impl, CLASS_E_CLASSNOTAVAILABLE,
-    S_OK,
-};
-use windows::Win32::System::Ole::IBindCtx;
-use windows::Win32::System::Registry::{
-    RegGetValueW, HKEY_CURRENT_USER, RRF_RT_REG_SZ,
-};
+use windows::Win32::System::Com::{CoTaskMemAlloc, IBindCtx, IClassFactory, IClassFactory_Impl};
+use windows::Win32::System::Registry::{RegGetValueW, HKEY_CURRENT_USER, RRF_RT_REG_SZ};
 use windows::Win32::UI::Shell::{
-    IExplorerCommand, IExplorerCommand_Impl, IEnumExplorerCommand, IShellItemArray,
-    SIGDN_FILESYSPATH,
+    EXPCMDFLAGS, EXPCMDSTATE, IEnumExplorerCommand, IExplorerCommand, IExplorerCommand_Impl,
+    IShellItemArray, SIGDN_FILESYSPATH,
 };
 
 // One CLSID per verb (the manifest maps each Verb -> Clsid).
@@ -40,7 +34,7 @@ fn mode_for(clsid: &GUID) -> Option<&'static str> {
 
 fn alloc_pwstr(s: &str) -> PWSTR {
     let utf16: Vec<u16> = s.encode_utf16().chain(std::iter::once(0)).collect();
-    let bytes = (utf16.len() * std::mem::size_of::<u16>()) as usize;
+    let bytes = utf16.len() * std::mem::size_of::<u16>();
     let ptr = unsafe { CoTaskMemAlloc(bytes) } as *mut u16;
     unsafe {
         std::ptr::copy_nonoverlapping(utf16.as_ptr(), ptr, utf16.len());
@@ -50,16 +44,14 @@ fn alloc_pwstr(s: &str) -> PWSTR {
 
 fn read_pzip_exe() -> Option<String> {
     // The app writes its own path here during shell registration.
-    let sub = windows::core::w!("Software\\PZip");
-    let value = windows::core::w!("ExePath");
     let mut out_type = 0u32;
     let mut buf = vec![0u16; 1024];
-    let mut len = (buf.len() * 2) as u32;
+    let mut len = (buf.len() * std::mem::size_of::<u16>()) as u32;
     let hr = unsafe {
         RegGetValueW(
             HKEY_CURRENT_USER,
-            PCWSTR(sub.as_ptr()),
-            PCWSTR(value.as_ptr()),
+            windows::core::w!("Software\\PZip"),
+            windows::core::w!("ExePath"),
             RRF_RT_REG_SZ,
             Some(&mut out_type),
             Some(buf.as_mut_ptr() as *mut c_void),
@@ -93,32 +85,28 @@ impl Command {
 }
 
 impl IExplorerCommand_Impl for Command {
-    fn GetTitle(&self, _items: Option<&IShellItemArray>, name: *mut PWSTR) -> windows::core::Result<()> {
-        unsafe { *name = alloc_pwstr(self.title()); }
-        Ok(())
+    fn GetTitle(&self, _items: Option<&IShellItemArray>) -> windows::core::Result<PWSTR> {
+        Ok(alloc_pwstr(self.title()))
     }
 
-    fn GetIcon(&self, _items: Option<&IShellItemArray>, icon: *mut PWSTR) -> windows::core::Result<()> {
-        unsafe { *icon = alloc_pwstr(""); }
-        Ok(())
+    fn GetIcon(&self, _items: Option<&IShellItemArray>) -> windows::core::Result<PWSTR> {
+        Ok(alloc_pwstr(""))
     }
 
-    fn GetToolTip(&self, _items: Option<&IShellItemArray>, tip: *mut PWSTR) -> windows::core::Result<()> {
-        unsafe { *tip = alloc_pwstr(""); }
-        Ok(())
+    fn GetToolTip(&self, _items: Option<&IShellItemArray>) -> windows::core::Result<PWSTR> {
+        Ok(alloc_pwstr(""))
     }
 
-    fn GetCanonicalName(&self, _name: *mut GUID) -> windows::core::Result<()> {
-        Err(windows::core::Error::from(windows::core::HRESULT(0x80004001u32 as i32))) // E_NOTIMPL
+    fn GetCanonicalName(&self) -> windows::core::Result<GUID> {
+        Err(windows::core::Error::from(HRESULT(0x80004001i32))) // E_NOTIMPL
     }
 
     fn GetState(
         &self,
         _items: Option<&IShellItemArray>,
-        _ok_to_beep: BOOL,
-        _state: *mut u32,
-    ) -> windows::core::Result<()> {
-        Ok(())
+        _ok: BOOL,
+    ) -> windows::core::Result<EXPCMDSTATE> {
+        Ok(Default::default()) // ECS_ENABLED
     }
 
     fn Invoke(
@@ -126,10 +114,11 @@ impl IExplorerCommand_Impl for Command {
         items: Option<&IShellItemArray>,
         _pbc: Option<&IBindCtx>,
     ) -> windows::core::Result<()> {
-        let items = items.ok_or_else(|| windows::core::Error::from(windows::core::HRESULT(0x80004005u32 as i32)))?;
+        let items =
+            items.ok_or_else(|| windows::core::Error::from(HRESULT(0x80004005i32)))?; // E_FAIL
         let item = unsafe { items.GetItemAt(0)? };
         let path = unsafe { item.GetDisplayName(SIGDN_FILESYSPATH)? };
-        let path_str = unsafe { path.to_string()? };
+        let path_str = unsafe { path.to_string() }.unwrap_or_default();
 
         if let Some(exe) = read_pzip_exe() {
             let _ = std::process::Command::new(&exe)
@@ -140,12 +129,12 @@ impl IExplorerCommand_Impl for Command {
         Ok(())
     }
 
-    fn GetFlags(&self, _flags: *mut u32) -> windows::core::Result<()> {
-        Ok(())
+    fn GetFlags(&self) -> windows::core::Result<EXPCMDFLAGS> {
+        Ok(Default::default())
     }
 
-    fn EnumSubCommands(&self, _penum: *mut Option<IEnumExplorerCommand>) -> windows::core::Result<()> {
-        Err(windows::core::Error::from(windows::core::HRESULT(0x80004001u32 as i32))) // E_NOTIMPL
+    fn EnumSubCommands(&self) -> windows::core::Result<IEnumExplorerCommand> {
+        Err(windows::core::Error::from(HRESULT(0x80004001i32))) // E_NOTIMPL
     }
 }
 
@@ -162,7 +151,7 @@ impl IClassFactory_Impl for Factory {
         ppv: *mut *mut c_void,
     ) -> windows::core::Result<()> {
         let cmd: IExplorerCommand = Command::new(self.mode).into();
-        unsafe { *ppv = cmd.query(riid).map(|p| p.cast()).unwrap_or(std::ptr::null_mut()); }
+        unsafe { cmd.query(riid, ppv).ok()? };
         Ok(())
     }
 
@@ -176,22 +165,18 @@ pub extern "system" fn DllGetClassObject(
     clsid: *const GUID,
     iid: *const GUID,
     ppv: *mut *mut c_void,
-) -> windows::core::HRESULT {
-    let clsid = unsafe { *clsid };
-    let Some(mode) = mode_for(&clsid) else {
-        return CLASS_E_CLASSNOTAVAILABLE;
-    };
-    let factory: IClassFactory = Factory { mode }.into();
-    match unsafe { factory.query(iid) } {
-        Ok(p) => {
-            unsafe { *ppv = p.cast(); }
-            S_OK
-        }
-        Err(e) => e.code(),
+) -> HRESULT {
+    unsafe {
+        let clsid = *clsid;
+        let Some(mode) = mode_for(&clsid) else {
+            return HRESULT(0x80040111u32 as i32); // CLASS_E_CLASSNOTAVAILABLE
+        };
+        let factory: IClassFactory = Factory { mode }.into();
+        factory.query(iid, ppv)
     }
 }
 
 #[no_mangle]
-pub extern "system" fn DllCanUnloadNow() -> windows::core::HRESULT {
-    S_OK
+pub extern "system" fn DllCanUnloadNow() -> HRESULT {
+    HRESULT(0) // S_OK
 }

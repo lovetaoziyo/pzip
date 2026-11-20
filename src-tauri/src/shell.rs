@@ -20,6 +20,9 @@ pub fn register() -> Result<(), String> {
         .to_string_lossy()
         .to_string();
 
+    // 0. Record our own install path (the COM server reads this to launch us).
+    set_value("Software\\PZip", "ExePath", &exe)?;
+
     // 1. "Add to archive" on files and folders.
     set_value(ADD_KEY, "", "添加到压缩包 (PZip)")?;
     set_value(ADD_KEY, "Icon", &exe)?;
