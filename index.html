@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
@@ -11,35 +11,35 @@
       <!-- ===== Title bar ===== -->
       <header id="titlebar" data-tauri-drag-region>
         <div class="titlebar-left" data-tauri-drag-region>
-          <span class="logo" data-tauri-drag-region>馃棞锔?/span>
+          <span class="logo" data-tauri-drag-region>🗜️</span>
           <span class="app-title" data-tauri-drag-region>PZip</span>
           <span class="engine-version" id="engineVersion" data-tauri-drag-region></span>
         </div>
         <div class="titlebar-controls">
-          <button class="win-btn" id="btnMin" title="鏈€灏忓寲">&#x2212;</button>
-          <button class="win-btn" id="btnMax" title="鏈€澶у寲">&#x25A1;</button>
-          <button class="win-btn win-close" id="btnClose" title="鍏抽棴">&#x2715;</button>
+          <button class="win-btn" id="btnMin" title="最小化">&#x2212;</button>
+          <button class="win-btn" id="btnMax" title="最大化">&#x25A1;</button>
+          <button class="win-btn win-close" id="btnClose" title="关闭">&#x2715;</button>
         </div>
       </header>
 
       <!-- ===== Toolbar ===== -->
       <nav id="toolbar">
-        <button class="tb-btn" id="btnUp" title="涓婄Щ涓€绾?>&#8593; <span data-i18n="up">涓婄Щ</span></button>
-        <button class="tb-btn tb-primary" id="btnAdd" title="鍒涘缓鍘嬬缉鍖?>&#65291; <span data-i18n="add">娣诲姞</span></button>
-        <button class="tb-btn" id="btnExtract" title="瑙ｅ帇鍒版寚瀹氫綅缃?>&#10515; <span data-i18n="extract">瑙ｅ帇</span></button>
-        <button class="tb-btn" id="btnTest" title="娴嬭瘯鍘嬬缉鍖?>&#10003; <span data-i18n="test">娴嬭瘯</span></button>
-        <button class="tb-btn" id="btnOpen" title="鎵撳紑鍘嬬缉鍖?>&#128194; <span data-i18n="open">鎵撳紑</span></button>
-        <button class="tb-btn" id="btnHash" title="璁＄畻鏍￠獙鍜?># <span data-i18n="hash">鍝堝笇</span></button>
-        <button class="tb-btn" id="btnBench" title="鍘嬬缉鍩哄噯娴嬭瘯">&#9889; <span data-i18n="bench">鍩哄噯</span></button>
+        <button class="tb-btn" id="btnUp" title="上移一级">&#8593; <span data-i18n="up">上移</span></button>
+        <button class="tb-btn tb-primary" id="btnAdd" title="创建压缩包">&#65291; <span data-i18n="add">添加</span></button>
+        <button class="tb-btn" id="btnExtract" title="解压到指定位置">&#10515; <span data-i18n="extract">解压</span></button>
+        <button class="tb-btn" id="btnTest" title="测试压缩包">&#10003; <span data-i18n="test">测试</span></button>
+        <button class="tb-btn" id="btnOpen" title="打开压缩包">&#128194; <span data-i18n="open">打开</span></button>
+        <button class="tb-btn" id="btnHash" title="计算校验和"># <span data-i18n="hash">哈希</span></button>
+        <button class="tb-btn" id="btnBench" title="压缩基准测试">&#9889; <span data-i18n="bench">基准</span></button>
         <div class="spacer"></div>
-        <button class="tb-btn" id="btnShell" title="鍙抽敭鑿滃崟闆嗘垚">&#128736; <span data-i18n="shell">鍙抽敭闆嗘垚</span></button>
+        <button class="tb-btn" id="btnShell" title="右键菜单集成">&#128736; <span data-i18n="shell">右键集成</span></button>
         <button class="tb-btn" id="btnLang" title="Switch language">EN</button>
-        <button class="tb-btn" id="btnAbout" title="鍏充簬">&#9432;</button>
+        <button class="tb-btn" id="btnAbout" title="关于">&#9432;</button>
       </nav>
 
       <!-- ===== Address bar ===== -->
       <div id="addressbar">
-        <button id="btnRefresh" title="鍒锋柊">&#8635;</button>
+        <button id="btnRefresh" title="刷新">&#8635;</button>
         <input id="address" type="text" spellcheck="false" autocomplete="off" />
       </div>
 
@@ -48,18 +48,18 @@
         <table id="filelist">
           <thead>
             <tr>
-              <th class="col-name" data-i18n="colName">鍚嶇О</th>
-              <th class="col-size" data-i18n="colSize">澶у皬</th>
-              <th class="col-type" data-i18n="colType">绫诲瀷</th>
-              <th class="col-date" data-i18n="colDate">淇敼鏃堕棿</th>
+              <th class="col-name" data-i18n="colName">名称</th>
+              <th class="col-size" data-i18n="colSize">大小</th>
+              <th class="col-type" data-i18n="colType">类型</th>
+              <th class="col-date" data-i18n="colDate">修改时间</th>
             </tr>
           </thead>
           <tbody id="filelistBody"></tbody>
         </table>
         <div id="emptyState">
           <div class="empty-icon">&#128230;</div>
-          <div class="empty-title" data-i18n="dropHint">灏嗘枃浠舵嫋鏀惧埌姝ゅ</div>
-          <div class="empty-sub" data-i18n="dropHintSub">鎷栧叆鍘嬬缉鍖呭彲鎵撳紑锛屾嫋鍏ユ枃浠跺彲娣诲姞鍒板帇缂╁寘</div>
+          <div class="empty-title" data-i18n="dropHint">将文件拖放到此处</div>
+          <div class="empty-sub" data-i18n="dropHintSub">拖入压缩包可打开，拖入文件可添加到压缩包</div>
         </div>
       </main>
 
@@ -78,7 +78,7 @@
 
       <!-- ===== Drop overlay ===== -->
       <div id="dropOverlay" class="hidden">
-        <div class="drop-inner">&#128230;<br /><span data-i18n="dropRelease">鏉惧紑浠ョ户缁?/span></div>
+        <div class="drop-inner">&#128230;<br /><span data-i18n="dropRelease">松开以继续</span></div>
       </div>
     </div>
 
@@ -88,31 +88,31 @@
     <!-- ===== Compress dialog ===== -->
     <div id="compressDlg" class="modal hidden">
       <div class="modal-head">
-        <span class="modal-title" data-i18n="compressTitle">鍒涘缓鍘嬬缉鍖?/span>
+        <span class="modal-title" data-i18n="compressTitle">创建压缩包</span>
         <button class="modal-close" data-close="compressDlg">&#10005;</button>
       </div>
       <div class="modal-body">
         <label class="field">
-          <span data-i18n="archivePath">鍘嬬缉鍖呰矾寰?/span>
+          <span data-i18n="archivePath">压缩包路径</span>
           <div class="row">
             <input id="cArchive" type="text" spellcheck="false" />
-            <button id="cBrowse" class="mini-btn" data-i18n="browse">娴忚鈥?/button>
+            <button id="cBrowse" class="mini-btn" data-i18n="browse">浏览…</button>
           </div>
         </label>
 
         <label class="field">
-          <span data-i18n="items">瑕佹坊鍔犵殑椤圭洰</span>
+          <span data-i18n="items">要添加的项目</span>
           <textarea id="cItems" rows="3" readonly spellcheck="false"></textarea>
           <div class="row gap">
-            <button id="cAddFiles" class="mini-btn" data-i18n="addFiles">娣诲姞鏂囦欢鈥?/button>
-            <button id="cAddFolder" class="mini-btn" data-i18n="addFolder">娣诲姞鏂囦欢澶光€?/button>
-            <button id="cClearItems" class="mini-btn" data-i18n="clear">娓呯┖</button>
+            <button id="cAddFiles" class="mini-btn" data-i18n="addFiles">添加文件…</button>
+            <button id="cAddFolder" class="mini-btn" data-i18n="addFolder">添加文件夹…</button>
+            <button id="cClearItems" class="mini-btn" data-i18n="clear">清空</button>
           </div>
         </label>
 
         <div class="grid-2">
           <label class="field">
-            <span data-i18n="format">鏍煎紡</span>
+            <span data-i18n="format">格式</span>
             <select id="cFormat">
               <option value="7z">7z</option>
               <option value="zip">zip</option>
@@ -124,20 +124,20 @@
             </select>
           </label>
           <label class="field">
-            <span data-i18n="level">鍘嬬缉绾у埆</span>
+            <span data-i18n="level">压缩级别</span>
             <select id="cLevel">
-              <option value="0">0 - 浠呭瓨鍌?/option>
-              <option value="1">1 - 鏈€蹇?/option>
-              <option value="3">3 - 蹇€?/option>
-              <option value="5" selected>5 - 鏍囧噯</option>
-              <option value="7">7 - 鏈€澶?/option>
-              <option value="9">9 - 鏋侀檺</option>
+              <option value="0">0 - 仅存储</option>
+              <option value="1">1 - 最快</option>
+              <option value="3">3 - 快速</option>
+              <option value="5" selected>5 - 标准</option>
+              <option value="7">7 - 最大</option>
+              <option value="9">9 - 极限</option>
             </select>
           </label>
           <label class="field">
-            <span data-i18n="method">鍘嬬缉鏂规硶</span>
+            <span data-i18n="method">压缩方法</span>
             <select id="cMethod">
-              <option value="">锛堣嚜鍔級</option>
+              <option value="">（自动）</option>
               <option value="LZMA2">LZMA2</option>
               <option value="LZMA">LZMA</option>
               <option value="PPMd">PPMd</option>
@@ -147,7 +147,7 @@
             </select>
           </label>
           <label class="field">
-            <span data-i18n="password">瀵嗙爜锛堢暀绌哄垯鏃狅級</span>
+            <span data-i18n="password">密码（留空则无）</span>
             <input id="cPassword" type="password" autocomplete="new-password" />
           </label>
         </div>
@@ -155,115 +155,116 @@
         <div class="grid-2 checks">
           <label class="check">
             <input id="cEncryptHeaders" type="checkbox" />
-            <span data-i18n="encryptHeaders">鍔犲瘑鏂囦欢鍚嶏紙浠?7z锛?/span>
+            <span data-i18n="encryptHeaders">加密文件名（仅 7z）</span>
           </label>
           <label class="check">
             <input id="cSfx" type="checkbox" />
-            <span data-i18n="sfx">鍒涘缓鑷В鍘?.exe锛堜粎 7z锛?/span>
+            <span data-i18n="sfx">创建自解压 .exe（仅 7z）</span>
           </label>
         </div>
 
         <label class="field">
-          <span data-i18n="split">鍒嗗嵎澶у皬锛堢暀绌轰笉鍒嗗嵎锛?/span>
+          <span data-i18n="split">分卷大小（留空不分卷）</span>
           <select id="cSplit">
-            <option value="">锛堜笉鍒嗗嵎锛?/option>
+            <option value="">（不分卷）</option>
             <option value="10m">10 MB</option>
             <option value="100m">100 MB</option>
             <option value="650m">650 MB (CD)</option>
             <option value="700m">700 MB (CD)</option>
             <option value="4.7g">4.7 GB (DVD)</option>
-            <option value="custom">鑷畾涔夆€?/option>
+            <option value="custom">自定义…</option>
           </select>
-          <input id="cSplitCustom" type="text" class="hidden" placeholder="濡?200m / 1g" />
+          <input id="cSplitCustom" type="text" class="hidden" placeholder="如 200m / 1g" />
         </label>
       </div>
       <div class="modal-foot">
-        <button class="btn" data-close="compressDlg" data-i18n="cancel">鍙栨秷</button>
-        <button class="btn btn-primary" id="cStart" data-i18n="start">寮€濮?/button>
+        <button class="btn" data-close="compressDlg" data-i18n="cancel">取消</button>
+        <button class="btn btn-primary" id="cStart" data-i18n="start">开始</button>
       </div>
     </div>
 
     <!-- ===== Extract dialog ===== -->
     <div id="extractDlg" class="modal hidden">
       <div class="modal-head">
-        <span class="modal-title" data-i18n="extractTitle">瑙ｅ帇</span>
+        <span class="modal-title" data-i18n="extractTitle">解压</span>
         <button class="modal-close" data-close="extractDlg">&#10005;</button>
       </div>
       <div class="modal-body">
         <label class="field">
-          <span data-i18n="dest">瑙ｅ帇鍒?/span>
+          <span data-i18n="dest">解压到</span>
           <div class="row">
             <input id="eDest" type="text" spellcheck="false" />
-            <button id="eBrowse" class="mini-btn" data-i18n="browse">娴忚鈥?/button>
+            <button id="eBrowse" class="mini-btn" data-i18n="browse">浏览…</button>
           </div>
         </label>
         <div class="grid-2 checks">
           <label class="check">
             <input id="eOverwrite" type="checkbox" checked />
-            <span data-i18n="overwrite">瑕嗙洊宸插瓨鍦ㄧ殑鏂囦欢</span>
+            <span data-i18n="overwrite">覆盖已存在的文件</span>
           </label>
         </div>
         <label class="field">
-          <span data-i18n="password">瀵嗙爜锛堝闇€瑕侊級</span>
+          <span data-i18n="password">密码（如需要）</span>
           <input id="ePassword" type="password" autocomplete="new-password" />
         </label>
       </div>
       <div class="modal-foot">
-        <button class="btn" data-close="extractDlg" data-i18n="cancel">鍙栨秷</button>
-        <button class="btn btn-primary" id="eStart" data-i18n="start">寮€濮?/button>
+        <button class="btn" data-close="extractDlg" data-i18n="cancel">取消</button>
+        <button class="btn btn-primary" id="eStart" data-i18n="start">开始</button>
       </div>
     </div>
 
     <!-- ===== Password prompt ===== -->
     <div id="pwdDlg" class="modal hidden">
       <div class="modal-head">
-        <span class="modal-title" data-i18n="passwordTitle">闇€瑕佸瘑鐮?/span>
+        <span class="modal-title" data-i18n="passwordTitle">需要密码</span>
         <button class="modal-close" data-close="pwdDlg">&#10005;</button>
       </div>
       <div class="modal-body">
         <label class="field">
-          <span data-i18n="password">瀵嗙爜</span>
+          <span data-i18n="password">密码</span>
           <input id="pwdInput" type="password" autocomplete="new-password" />
         </label>
       </div>
       <div class="modal-foot">
-        <button class="btn" data-close="pwdDlg" data-i18n="cancel">鍙栨秷</button>
-        <button class="btn btn-primary" id="pwdOk" data-i18n="ok">纭畾</button>
+        <button class="btn" data-close="pwdDlg" data-i18n="cancel">取消</button>
+        <button class="btn btn-primary" id="pwdOk" data-i18n="ok">确定</button>
       </div>
     </div>
 
     <!-- ===== Text result dialog (hash / benchmark) ===== -->
     <div id="textDlg" class="modal hidden">
       <div class="modal-head">
-        <span class="modal-title" id="textDlgTitle">缁撴灉</span>
+        <span class="modal-title" id="textDlgTitle">结果</span>
         <button class="modal-close" data-close="textDlg">&#10005;</button>
       </div>
       <div class="modal-body">
         <pre id="textDlgBody"></pre>
       </div>
       <div class="modal-foot">
-        <button class="btn btn-primary" data-close="textDlg" data-i18n="close">鍏抽棴</button>
+        <button class="btn btn-primary" data-close="textDlg" data-i18n="close">关闭</button>
       </div>
     </div>
 
     <!-- ===== About dialog ===== -->
     <div id="aboutDlg" class="modal hidden">
       <div class="modal-head">
-        <span class="modal-title" data-i18n="about">鍏充簬</span>
+        <span class="modal-title" data-i18n="about">关于</span>
         <button class="modal-close" data-close="aboutDlg">&#10005;</button>
       </div>
       <div class="modal-body about-body">
-        <div class="about-logo">馃棞锔?/div>
+        <div class="about-logo">🗜️</div>
         <div class="about-name">PZip</div>
-        <div class="about-desc" data-i18n="aboutDesc">鍩轰簬瀹樻柟 7-Zip 鐨勬墎骞冲寲鐜颁唬鍘嬬缉杞欢</div>
+        <div class="about-desc" data-i18n="aboutDesc">基于官方 7-Zip 的扁平化现代压缩软件</div>
         <div class="about-version" id="aboutVersion"></div>
         <hr />
         <p class="about-license" data-i18n="aboutLicense">
-          鏈蒋浠堕泦鎴愪簡 7-Zip锛堢増鏈涓婏級銆?-Zip 鐗堟潈褰?Igor Pavlov 鎵€鏈夛紝閲囩敤 GNU LGPL 璁稿彲璇佸垎鍙戯紝
-          婧愪唬鐮佸彲鍦?www.7-zip.org 鑾峰彇銆?        </p>
+          本软件集成了 7-Zip（版本见上）。7-Zip 版权归 Igor Pavlov 所有，采用 GNU LGPL 许可证分发，
+          源代码可在 www.7-zip.org 获取。
+        </p>
       </div>
       <div class="modal-foot">
-        <button class="btn btn-primary" data-close="aboutDlg" data-i18n="close">鍏抽棴</button>
+        <button class="btn btn-primary" data-close="aboutDlg" data-i18n="close">关闭</button>
       </div>
     </div>
 
