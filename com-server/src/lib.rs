@@ -6,7 +6,7 @@
 
 use std::ffi::c_void;
 
-use windows::core::{implement, GUID, IUnknown, Interface, PCWSTR, PWSTR, HRESULT};
+use windows::core::{implement, GUID, IUnknown, Interface, PWSTR, HRESULT};
 use windows::Win32::Foundation::BOOL;
 use windows::Win32::System::Com::{CoTaskMemAlloc, IBindCtx, IClassFactory, IClassFactory_Impl};
 use windows::Win32::System::Registry::{RegGetValueW, HKEY_CURRENT_USER, RRF_RT_REG_SZ};
@@ -29,6 +29,14 @@ fn mode_for(clsid: &GUID) -> Option<&'static str> {
         Some("--extract-to")
     } else {
         None
+    }
+}
+
+fn title_for(mode: &str) -> &'static str {
+    match mode {
+        "--add" => "添加到压缩包 (PZip)",
+        "--extract-here" => "解压到当前文件夹 (PZip)",
+        _ => "解压到文件夹 (PZip)",
     }
 }
 
@@ -69,23 +77,9 @@ struct Command {
     mode: &'static str,
 }
 
-impl Command {
-    fn new(mode: &'static str) -> Self {
-        Self { mode }
-    }
-
-    fn title(&self) -> &'static str {
-        match self.mode {
-            "--add" => "添加到压缩包 (PZip)",
-            "--extract-here" => "解压到当前文件夹 (PZip)",
-            _ => "解压到文件夹 (PZip)",
-        }
-    }
-}
-
-impl IExplorerCommand_Impl for Command {
+impl IExplorerCommand_Impl for Command_Impl {
     fn GetTitle(&self, _items: Option<&IShellItemArray>) -> windows::core::Result<PWSTR> {
-        Ok(alloc_pwstr(self.title()))
+        Ok(alloc_pwstr(title_for(self.mode)))
     }
 
     fn GetIcon(&self, _items: Option<&IShellItemArray>) -> windows::core::Result<PWSTR> {
@@ -142,14 +136,14 @@ struct Factory {
     mode: &'static str,
 }
 
-impl IClassFactory_Impl for Factory {
+impl IClassFactory_Impl for Factory_Impl {
     fn CreateInstance(
         &self,
         _outer: Option<&IUnknown>,
         riid: *const GUID,
         ppv: *mut *mut c_void,
     ) -> windows::core::Result<()> {
-        let cmd: IExplorerCommand = Command::new(self.mode).into();
+        let cmd: IExplorerCommand = Command { mode: self.mode }.into();
         unsafe { cmd.query(riid, ppv).ok()? };
         Ok(())
     }
