@@ -1,38 +1,45 @@
 package com.pathea.assistant
 
 import android.content.Context
-import com.tim.openvpn.configuration.OpenVPNConfig
-import com.tim.openvpn.service.OpenVPNService
-import java.io.File
+import android.content.Intent
+import de.blinkt.openvpn.activities.DisconnectVPN
+import de.blinkt.openvpn.core.ConfigParser
+import de.blinkt.openvpn.core.OpenVPNService
+import de.blinkt.openvpn.core.ProfileManager
+import de.blinkt.openvpn.core.VPNLaunchHelper
+import java.io.StringReader
 
 /**
- * 一键连接 / 断开 OpenVPN。
- * 把 LDAP 用户名密码写入文件，用 auth-user-pass <file> 方式注入配置，
- * 并开启 log 日志便于排查连接失败原因。
+ * 一键连接 / 断开 OpenVPN（基于 ics-openvpn，OpenVPN 2.x）。
+ * 原生支持 LDAP 用户名密码 + 标准 OpenVPN 配置（tls-crypt / data-ciphers / tun-mtu 等）。
  */
 object VpnHelper {
 
     fun connect(context: Context, username: String, password: String) {
-        val base = readRawConfig(context)
+        val config = readRawConfig(context)
 
-        // 凭据写入文件，用 auth-user-pass <file> 引用（OpenVPN 3 兼容性最好）
-        val credsFile = File(context.filesDir, "creds.txt")
-        credsFile.writeText("$username\n$password")
+        // 解析标准 .ovpn 配置
+        val parser = ConfigParser()
+        parser.parseConfig(StringReader(config))
+        val profile = parser.convertProfile()
+        profile.mName = "Pathea VPN"
+        profile.mUsername = username
+        profile.mPassword = password
 
-        // 日志写入外部应用目录（文件管理器可读：Android/data/com.pathea.assistant/files/）
-        val logDir = context.getExternalFilesDir(null) ?: context.filesDir
-        val logFile = File(logDir, "openvpn.log")
+        // 保存 profile（VPN 服务运行在独立进程，需持久化到磁盘）
+        val pm = ProfileManager.getInstance(context)
+        pm.addProfile(profile)
+        pm.saveProfile(context, profile)
 
-        val config = base
-            .replace("auth-user-pass", "auth-user-pass ${credsFile.absolutePath}")
-            .replace("verb 3", "verb 4\nlog ${logFile.absolutePath}")
-
-        val ovpnConfig = OpenVPNConfig(configuration = config)
-        OpenVPNService.startService(context, ovpnConfig)
+        // 启动 VPN
+        VPNLaunchHelper.startOpenVpn(profile, context)
     }
 
     fun disconnect(context: Context) {
-        OpenVPNService.stopService(context)
+        val intent = Intent(context, DisconnectVPN::class.java)
+        intent.setAction(OpenVPNService.DISCONNECT_VPN)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent)
     }
 
     private fun readRawConfig(context: Context): String {
