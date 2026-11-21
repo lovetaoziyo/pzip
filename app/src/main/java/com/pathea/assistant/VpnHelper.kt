@@ -12,8 +12,13 @@ object VpnHelper {
 
     fun connect(context: Context, username: String, password: String) {
         val base = readRawConfig(context)
+        // 内联 <auth-user-pass> 注入凭据（OpenVPN 3 不调用 provide_creds，需直接写进配置）
+        val config = base.replace(
+            "auth-user-pass",
+            "<auth-user-pass>\n$username\n$password\n</auth-user-pass>"
+        )
         val ovpnConfig = OpenVPNConfig(
-            configuration = base,
+            configuration = config,
             username = username,
             password = password
         )
