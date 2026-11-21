@@ -13,6 +13,8 @@ import com.pathea.assistant.databinding.ActivityMainBinding
 import com.tim.basevpn.state.ConnectionState
 import com.tim.openvpn.connection.OpenVPNVpnConnection
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -23,8 +25,11 @@ class MainActivity : AppCompatActivity() {
     private var pendingConnect: Pair<String, String>? = null
     private var vpnConnection: OpenVPNVpnConnection? = null
     private var vpnConnected = false
+    private var vpnConnecting = false
     private var intranetConnected = false
     private var credentialsSaved = false
+    private var pingJob: Job? = null
+    private var vpnDialogShowing = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,10 +56,15 @@ class MainActivity : AppCompatActivity() {
 
         if (credentialsSaved) {
             collapseCard()
-            pingCheck()
+            startPeriodicPing()
         } else {
             showCard()
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        pingJob?.cancel()
     }
 
     private fun onSaveClick() {
@@ -67,32 +77,61 @@ class MainActivity : AppCompatActivity() {
         credentialStore.save(username, password)
         credentialsSaved = true
         collapseCard()
-        pingCheck()
+        startPeriodicPing()
     }
 
-    private fun pingCheck() {
-        setStatusText(getString(R.string.checking_network))
-        lifecycleScope.launch(Dispatchers.IO) {
-            val reachable = isReachable(INTRANET_IP)
-            withContext(Dispatchers.Main) {
-                intranetConnected = reachable
-                if (reachable) {
-                    setStatusText(getString(R.string.vpn_connected))
-                } else {
-                    setStatusText(getString(R.string.vpn_disconnected))
-                    showVpnNeededDialog()
-                }
+    private fun startPeriodicPing() {
+        pingJob?.cancel()
+        pingJob = lifecycleScope.launch {
+            while (true) {
+                pingOnce()
+                delay(PING_INTERVAL_MS)
+            }
+        }
+    }
+
+    private suspend fun pingOnce() {
+        val reachable = withContext(Dispatchers.IO) { isReachable(INTRANET_IP) }
+        withContext(Dispatchers.Main) { onPingResult(reachable) }
+    }
+
+    private fun onPingResult(reachable: Boolean) {
+        // VPN 已连接或正在连接时，以内网/VPN 状态为准，不打断
+        if (vpnConnected) {
+            setStatusText(getString(R.string.vpn_connected))
+            return
+        }
+        if (vpnConnecting) {
+            return
+        }
+        intranetConnected = reachable
+        if (reachable) {
+            setStatusText(getString(R.string.vpn_connected))
+            vpnDialogShowing = false
+        } else {
+            setStatusText(getString(R.string.vpn_disconnected))
+            if (!vpnDialogShowing) {
+                showVpnNeededDialog()
             }
         }
     }
 
     private fun showVpnNeededDialog() {
-        AlertDialog.Builder(this)
+        vpnDialogShowing = true
+        val dialog = AlertDialog.Builder(this)
             .setTitle(R.string.vpn_needed_title)
             .setMessage(R.string.vpn_needed_message)
-            .setPositiveButton(R.string.vpn_connect) { _, _ -> connectVpn() }
-            .setNegativeButton(R.string.vpn_modify_account) { _, _ -> showCard() }
-            .show()
+            .setPositiveButton(R.string.vpn_connect) { _, _ ->
+                vpnDialogShowing = false
+                connectVpn()
+            }
+            .setNegativeButton(R.string.vpn_modify_account) { _, _ ->
+                vpnDialogShowing = false
+                showCard()
+            }
+            .setOnCancelListener { vpnDialogShowing = false }
+            .create()
+        dialog.show()
     }
 
     private fun connectVpn() {
@@ -135,6 +174,7 @@ class MainActivity : AppCompatActivity() {
         vpnConnection = null
         VpnHelper.disconnect(this)
         vpnConnected = false
+        vpnConnecting = false
         setDisconnected()
     }
 
@@ -167,12 +207,17 @@ class MainActivity : AppCompatActivity() {
         when (state) {
             ConnectionState.CONNECTED -> {
                 vpnConnected = true
+                vpnConnecting = false
                 setStatusText(getString(R.string.vpn_connected))
                 collapseCard()
             }
-            ConnectionState.CONNECTING -> setConnecting()
+            ConnectionState.CONNECTING -> {
+                vpnConnecting = true
+                setConnecting()
+            }
             else -> {
                 vpnConnected = false
+                vpnConnecting = false
                 setDisconnected()
             }
         }
@@ -248,6 +293,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val VPN_REQUEST_CODE = 24
+        private const val PING_INTERVAL_MS = 5000L
         private const val INTRANET_IP = "10.96.8.9"
         private const val RUSTDESK_PACKAGE = "com.carriez.flutter_hbb"
         const val URL_AD = "https://account.patheagames.com:9252"
