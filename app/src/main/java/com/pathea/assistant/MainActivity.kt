@@ -70,6 +70,7 @@ class MainActivity : AppCompatActivity() {
         setVpnUi(ConnectionState.CONNECTING)
         try {
             VpnHelper.connect(this, username, password)
+            Toast.makeText(this, "连接已启动", Toast.LENGTH_SHORT).show()
         } catch (t: Throwable) {
             setVpnUi(ConnectionState.DISCONNECTED)
             Toast.makeText(
@@ -84,6 +85,17 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread { onVpnState(state) }
         }
         vpnConnection?.attachListener()
+        // 延迟检查是否有底层错误
+        Handler(Looper.getMainLooper()).postDelayed({
+            val errFile = File(getExternalFilesDir(null) ?: filesDir, "openvpn-error.log")
+            if (errFile.exists() && errFile.length() > 0) {
+                AlertDialog.Builder(this)
+                    .setTitle("OpenVPN 底层错误")
+                    .setMessage(errFile.readText())
+                    .setPositiveButton("关闭", null)
+                    .show()
+            }
+        }, 4000)
     }
 
     private fun disconnect() {
@@ -155,6 +167,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        Toast.makeText(this, "授权结果: $resultCode", Toast.LENGTH_SHORT).show()
         if (requestCode == VPN_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
             pendingConnect?.let { (u, p) -> doConnect(u, p) }
             pendingConnect = null

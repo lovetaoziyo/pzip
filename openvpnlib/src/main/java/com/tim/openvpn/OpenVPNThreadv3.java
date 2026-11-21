@@ -71,8 +71,10 @@ public class OpenVPNThreadv3 extends ClientAPI_OpenVPNClient implements Runnable
 
     @Override
     public void run() {
-        if (!setConfig(configuration))
+        if (!setConfig(configuration)) {
+            logError("setConfig 失败：eval_config 解析配置出错");
             return;
+        }
 
         OpenVPNLogger.d("OpenVPNThreadv3", ClientAPI_OpenVPNClientHelper.platform());
         OpenVPNLogger.d("OpenVPNThreadv3", ClientAPI_OpenVPNClientHelper.copyright());
@@ -81,10 +83,27 @@ public class OpenVPNThreadv3 extends ClientAPI_OpenVPNClient implements Runnable
 
         ClientAPI_Status status = connect();
         if (status.getError()) {
-            OpenVPNLogger.e("OpenVPNThreadv3", String.format("connect() error: %s: %s", status.getStatus(), status.getMessage()));
+            logError("connect() error: " + status.getStatus() + ": " + status.getMessage());
         }
         OpenVPNLogger.d("OpenVPNThreadv3", "NOPROCESS" + "OpenVPN3 thread finished");
         mHandler.removeCallbacks(this::pollStatus);
+    }
+
+    private void logError(String message) {
+        OpenVPNLogger.e("OpenVPNThreadv3", message);
+        try {
+            if (mService instanceof android.content.Context) {
+                android.content.Context ctx = (android.content.Context) mService;
+                java.io.File dir = ctx.getExternalFilesDir(null);
+                if (dir != null) {
+                    java.io.File f = new java.io.File(dir, "openvpn-error.log");
+                    java.io.FileWriter w = new java.io.FileWriter(f, true);
+                    w.append(message).append("\n");
+                    w.close();
+                }
+            }
+        } catch (Exception ignored) {
+        }
     }
 
     @Override
@@ -232,7 +251,7 @@ public class OpenVPNThreadv3 extends ClientAPI_OpenVPNClient implements Runnable
             OpenVPNLogger.d("OpenVPNThreadv3", "OpenVPN3 core assumes an external PKI config");
         }
         if (ec.getError()) {
-            OpenVPNLogger.d("OpenVPNThreadv3", "OpenVPN config file parse error: " + ec.getMessage());
+            logError("eval_config 解析错误: " + ec.getMessage());
             return false;
         } else {
             config.setContent(vpnconfig);
