@@ -13,6 +13,7 @@ import com.pathea.assistant.databinding.ActivityMainBinding
 import com.tim.basevpn.state.ConnectionState
 import com.tim.openvpn.connection.OpenVPNVpnConnection
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
