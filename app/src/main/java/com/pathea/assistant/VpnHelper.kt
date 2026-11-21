@@ -12,11 +12,16 @@ object VpnHelper {
 
     fun connect(context: Context, username: String, password: String) {
         val base = readRawConfig(context)
+        // 双保险：内联 <auth-user-pass> + provide_creds 回调
         val config = base.replace(
             "auth-user-pass",
             "<auth-user-pass>\n$username\n$password\n</auth-user-pass>"
         )
-        val ovpnConfig = OpenVPNConfig(configuration = config)
+        val ovpnConfig = OpenVPNConfig(
+            configuration = config,
+            username = username,
+            password = password
+        )
         OpenVPNService.startService(context, ovpnConfig)
     }
 
