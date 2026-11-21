@@ -7,13 +7,15 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.pathea.assistant.databinding.ActivityMainBinding
+import com.tim.basevpn.state.ConnectionState
+import com.tim.openvpn.connection.OpenVPNVpnConnection
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var credentialStore: CredentialStore
-    private var connected = false
     private var pendingConnect: Pair<String, String>? = null
+    private var vpnConnection: OpenVPNVpnConnection? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -21,7 +23,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         credentialStore = CredentialStore(this)
 
-        // 回填已保存的账号密码
         binding.usernameInput.setText(credentialStore.username() ?: "")
         binding.passwordInput.setText(credentialStore.password() ?: "")
         binding.rememberCheckbox.isChecked = credentialStore.password() != null
@@ -33,10 +34,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onConnectClick() {
-        if (connected) {
-            VpnHelper.disconnect(this)
-            connected = false
-            updateVpnUi()
+        if (isVpnActive()) {
+            disconnect()
             return
         }
 
@@ -47,14 +46,12 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // 记住密码
         if (binding.rememberCheckbox.isChecked) {
             credentialStore.save(username, password)
         } else {
             credentialStore.clear()
         }
 
-        // 请求 VPN 权限（首次）
         val prepare = VpnService.prepare(this)
         if (prepare != null) {
             pendingConnect = Pair(username, password)
@@ -65,9 +62,51 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun doConnect(username: String, password: String) {
-        connected = true
-        updateVpnUi()
+        setVpnUi(ConnectionState.CONNECTING)
         VpnHelper.connect(this, username, password)
+        // 监听真实连接状态
+        vpnConnection = OpenVPNVpnConnection(this) { state ->
+            runOnUiThread { onVpnState(state) }
+        }
+        vpnConnection?.attachListener()
+    }
+
+    private fun disconnect() {
+        vpnConnection?.stopServiceIfNeed(true)
+        vpnConnection = null
+        VpnHelper.disconnect(this)
+        setVpnUi(ConnectionState.DISCONNECTED)
+    }
+
+    private fun onVpnState(state: ConnectionState) {
+        setVpnUi(state)
+        if (state == ConnectionState.PERMISSION_NOT_GRANTED) {
+            Toast.makeText(this, R.string.vpn_permission_hint, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun isVpnActive(): Boolean {
+        return binding.connectButton.text.toString() == getString(R.string.vpn_disconnect)
+    }
+
+    private fun setVpnUi(state: ConnectionState) {
+        when (state) {
+            ConnectionState.CONNECTING -> {
+                binding.vpnStatusText.text = getString(R.string.vpn_connecting)
+                binding.connectButton.isEnabled = false
+                binding.connectButton.text = getString(R.string.vpn_connecting)
+            }
+            ConnectionState.CONNECTED -> {
+                binding.vpnStatusText.text = getString(R.string.vpn_connected)
+                binding.connectButton.isEnabled = true
+                binding.connectButton.text = getString(R.string.vpn_disconnect)
+            }
+            else -> {
+                binding.vpnStatusText.text = getString(R.string.vpn_disconnected)
+                binding.connectButton.isEnabled = true
+                binding.connectButton.text = getString(R.string.vpn_connect)
+            }
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -77,16 +116,6 @@ class MainActivity : AppCompatActivity() {
             pendingConnect = null
         } else {
             pendingConnect = null
-        }
-    }
-
-    private fun updateVpnUi() {
-        if (connected) {
-            binding.vpnStatusText.text = getString(R.string.vpn_connected)
-            binding.connectButton.text = getString(R.string.vpn_disconnect)
-        } else {
-            binding.vpnStatusText.text = getString(R.string.vpn_disconnected)
-            binding.connectButton.text = getString(R.string.vpn_connect)
         }
     }
 
