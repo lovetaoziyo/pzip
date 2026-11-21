@@ -92,9 +92,9 @@ class WebActivity : AppCompatActivity() {
                     )
                     val dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
                     dm.enqueue(request)
-                    Toast.makeText(this, R.string.download_started, Toast.LENGTH_LONG).show()
+                    Toast.makeText(this@WebActivity, R.string.download_started, Toast.LENGTH_LONG).show()
                 } catch (e: Exception) {
-                    Toast.makeText(this, "下载失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@WebActivity, "下载失败: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             })
             loadUrl(url)
