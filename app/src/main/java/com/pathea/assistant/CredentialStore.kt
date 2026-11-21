@@ -2,26 +2,15 @@ package com.pathea.assistant
 
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.security.crypto.EncryptedSharedPreferences
-import androidx.security.crypto.MasterKey
 
 /**
- * 加密存储 VPN 账号与密码（AES256）。
+ * 存储 VPN / AD 域账号密码。
+ * 注：当前使用普通 SharedPreferences 存储，后续可升级为 Keystore 加密。
  */
 class CredentialStore(context: Context) {
 
-    private val prefs: SharedPreferences by lazy {
-        val masterKey = MasterKey.Builder(context)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-            .build()
-        EncryptedSharedPreferences.create(
-            context,
-            "vpn_credentials",
-            masterKey,
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
-    }
+    private val prefs: SharedPreferences =
+        context.getSharedPreferences("vpn_credentials", Context.MODE_PRIVATE)
 
     fun save(username: String, password: String) {
         prefs.edit()
