@@ -1,14 +1,18 @@
 package com.pathea.assistant
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Intent
 import android.net.VpnService
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.pathea.assistant.databinding.ActivityMainBinding
 import com.tim.basevpn.state.ConnectionState
 import com.tim.openvpn.connection.OpenVPNVpnConnection
+import java.io.File
 
 class MainActivity : AppCompatActivity() {
 
@@ -16,6 +20,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var credentialStore: CredentialStore
     private var pendingConnect: Pair<String, String>? = null
     private var vpnConnection: OpenVPNVpnConnection? = null
+    private var lastVpnState: ConnectionState? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -90,9 +95,38 @@ class MainActivity : AppCompatActivity() {
 
     private fun onVpnState(state: ConnectionState) {
         setVpnUi(state)
-        if (state == ConnectionState.PERMISSION_NOT_GRANTED) {
-            Toast.makeText(this, R.string.vpn_permission_hint, Toast.LENGTH_LONG).show()
+        when (state) {
+            ConnectionState.PERMISSION_NOT_GRANTED ->
+                Toast.makeText(this, R.string.vpn_permission_hint, Toast.LENGTH_LONG).show()
+            ConnectionState.DISCONNECTED -> {
+                if (lastVpnState == ConnectionState.CONNECTING) {
+                    showVpnError()
+                }
+            }
+            else -> Unit
         }
+        lastVpnState = state
+    }
+
+    private fun showVpnError() {
+        Handler(Looper.getMainLooper()).postDelayed({
+            val logFile = File(getExternalFilesDir(null) ?: filesDir, "openvpn.log")
+            val tail = if (logFile.exists()) {
+                logFile.readLines().takeLast(25).joinToString("\n")
+            } else {
+                ""
+            }
+            val msg = if (tail.isBlank()) {
+                "（日志为空，说明在配置解析阶段就失败了）"
+            } else {
+                tail
+            }
+            AlertDialog.Builder(this)
+                .setTitle("VPN 连接失败")
+                .setMessage(msg)
+                .setPositiveButton("关闭", null)
+                .show()
+        }, 1200)
     }
 
     private fun isVpnActive(): Boolean {
