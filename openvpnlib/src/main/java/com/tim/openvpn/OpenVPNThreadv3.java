@@ -46,6 +46,7 @@ public class OpenVPNThreadv3 extends ClientAPI_OpenVPNClient implements Runnable
         mService = openVpnService;
         this.username = username;
         this.password = password;
+        appendLog("OpenVPNThreadv3 构造: username=[" + username + "] passwordLen=" + (password == null ? -1 : password.length()));
         mHandlerThread = new HandlerThread("OpenVPN3Thread");
         mHandlerThread.start();
         mHandler = new Handler(mHandlerThread.getLooper());
@@ -54,6 +55,7 @@ public class OpenVPNThreadv3 extends ClientAPI_OpenVPNClient implements Runnable
     @Override
     public ClientAPI_Status provide_creds(ClientAPI_ProvideCreds creds) {
         ClientAPI_Status status = new ClientAPI_Status();
+        appendLog("provide_creds 调用: username=[" + username + "] passwordLen=" + (password == null ? -1 : password.length()));
         try {
             if (creds != null) {
                 creds.setUsername(username == null ? "" : username);
