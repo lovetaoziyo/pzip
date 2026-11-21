@@ -5,7 +5,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 
     <application
         android:name=".App"
@@ -30,11 +30,15 @@
             android:name=".WebActivity"
             android:exported="false" />
 
-        <!-- 覆盖库里的 OpenVPNService，补上前台服务类型（Android 14 要求） -->
+        <!-- 覆盖库里的 OpenVPNService，补上前台服务类型（Android 14 要求，库用的是 specialUse） -->
         <service
             android:name="com.tim.openvpn.service.OpenVPNService"
-            android:foregroundServiceType="connectedDevice"
-            tools:replace="android:foregroundServiceType" />
+            android:foregroundServiceType="specialUse"
+            tools:replace="android:foregroundServiceType">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="VPN connection for company network access" />
+        </service>
     </application>
 
 </manifest>
