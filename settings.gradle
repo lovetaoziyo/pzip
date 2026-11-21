@@ -14,4 +14,3 @@ dependencyResolutionManagement {
 }
 rootProject.name = "PatheaAssistant"
 include ':app'
-include ':openvpnlib'
