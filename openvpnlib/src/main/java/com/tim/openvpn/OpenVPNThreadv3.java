@@ -231,6 +231,8 @@ public class OpenVPNThreadv3 extends ClientAPI_OpenVPNClient implements Runnable
         //config.setSsoMethods("openurl,webauth,crtext");
         //config.setPlatformVersion(mVp.getPlatformVersionEnvString());
         config.setExternalPkiAlias("extpki");
+        // 用户名密码认证（auth-user-pass），无需客户端证书 cert/key
+        config.setDisableClientCert(true);
         config.setCompressionMode("asym");
 
 
