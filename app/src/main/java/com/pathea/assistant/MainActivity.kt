@@ -8,9 +8,12 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.pathea.assistant.databinding.ActivityMainBinding
 import com.tim.basevpn.state.ConnectionState
 import com.tim.openvpn.connection.OpenVPNVpnConnection
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
 
@@ -19,6 +22,8 @@ class MainActivity : AppCompatActivity() {
     private var pendingConnect: Pair<String, String>? = null
     private var vpnConnection: OpenVPNVpnConnection? = null
     private var vpnConnected = false
+    private var intranetConnected = false
+    private var credentialsSaved = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,11 +31,15 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         credentialStore = CredentialStore(this)
 
-        binding.usernameInput.setText(credentialStore.username() ?: "")
-        binding.passwordInput.setText(credentialStore.password() ?: "")
-        binding.rememberCheckbox.isChecked = credentialStore.password() != null
+        val savedUser = credentialStore.username()
+        val savedPass = credentialStore.password()
+        credentialsSaved = savedUser != null && savedPass != null
 
-        binding.connectButton.setOnClickListener { onConnectClick() }
+        binding.usernameInput.setText(savedUser ?: "")
+        binding.passwordInput.setText(savedPass ?: "")
+        binding.rememberCheckbox.isChecked = credentialsSaved
+
+        binding.connectButton.setOnClickListener { onSaveClick() }
         binding.vpnStatusText.setOnClickListener { onStatusClick() }
         binding.shortcutAd.setOnClickListener { openWeb(getString(R.string.service_ad), URL_AD) }
         binding.shortcutItsm.setOnClickListener { openWeb(getString(R.string.service_itsm), URL_ITSM) }
@@ -38,27 +47,60 @@ class MainActivity : AppCompatActivity() {
         binding.shortcutWiki.setOnClickListener { openWeb(getString(R.string.service_wiki), URL_WIKI) }
         binding.shortcutRustdesk.setOnClickListener { onRustdeskClick() }
         binding.rustdeskDownloadNote.setOnClickListener { openWeb("RustDesk 下载", RUSTDESK_URL) }
+
+        if (credentialsSaved) {
+            collapseCard()
+            pingCheck()
+        } else {
+            showCard()
+        }
     }
 
-    private fun onConnectClick() {
-        if (vpnConnected) {
-            disconnect()
-            return
-        }
-
+    private fun onSaveClick() {
         val username = binding.usernameInput.text.toString().trim()
         val password = binding.passwordInput.text.toString()
         if (username.isEmpty() || password.isEmpty()) {
             Toast.makeText(this, R.string.vpn_need_credential, Toast.LENGTH_SHORT).show()
             return
         }
+        credentialStore.save(username, password)
+        credentialsSaved = true
+        collapseCard()
+        pingCheck()
+    }
 
-        if (binding.rememberCheckbox.isChecked) {
-            credentialStore.save(username, password)
-        } else {
-            credentialStore.clear()
+    private fun pingCheck() {
+        setStatusText(getString(R.string.checking_network))
+        lifecycleScope.launch(Dispatchers.IO) {
+            val reachable = isReachable(INTRANET_IP)
+            withContext(Dispatchers.Main) {
+                intranetConnected = reachable
+                if (reachable) {
+                    setStatusText(getString(R.string.vpn_connected))
+                } else {
+                    setStatusText(getString(R.string.vpn_disconnected))
+                    showVpnNeededDialog()
+                }
+            }
         }
+    }
 
+    private fun showVpnNeededDialog() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.vpn_needed_title)
+            .setMessage(R.string.vpn_needed_message)
+            .setPositiveButton(R.string.vpn_connect) { _, _ -> connectVpn() }
+            .setNegativeButton(R.string.vpn_modify_account) { _, _ -> showCard() }
+            .show()
+    }
+
+    private fun connectVpn() {
+        val username = credentialStore.username()
+        val password = credentialStore.password()
+        if (username == null || password == null) {
+            showCard()
+            return
+        }
         val prepare = VpnService.prepare(this)
         if (prepare != null) {
             pendingConnect = Pair(username, password)
@@ -69,11 +111,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun doConnect(username: String, password: String) {
-        setVpnUi(ConnectionState.CONNECTING)
+        setConnecting()
         try {
             VpnHelper.connect(this, username, password)
         } catch (t: Throwable) {
-            setVpnUi(ConnectionState.DISCONNECTED)
+            setDisconnected()
             Toast.makeText(
                 this,
                 "VPN启动失败: ${t.javaClass.simpleName}: ${t.message}",
@@ -91,51 +133,82 @@ class MainActivity : AppCompatActivity() {
         vpnConnection?.stopServiceIfNeed(true)
         vpnConnection = null
         VpnHelper.disconnect(this)
-        setVpnUi(ConnectionState.DISCONNECTED)
+        vpnConnected = false
+        setDisconnected()
     }
 
     private fun onStatusClick() {
-        if (vpnConnected) {
-            showVpnStatusDialog()
+        when {
+            vpnConnected -> {
+                AlertDialog.Builder(this)
+                    .setTitle(R.string.vpn_status_dialog_title)
+                    .setPositiveButton(R.string.vpn_disconnect) { _, _ -> disconnect() }
+                    .setNegativeButton(R.string.vpn_modify_account) { _, _ ->
+                        disconnect()
+                        showCard()
+                        binding.usernameInput.requestFocus()
+                    }
+                    .show()
+            }
+            intranetConnected -> {
+                AlertDialog.Builder(this)
+                    .setTitle(R.string.intranet_title)
+                    .setMessage(R.string.intranet_message)
+                    .setPositiveButton(R.string.vpn_modify_account) { _, _ -> showCard() }
+                    .setNegativeButton("关闭", null)
+                    .show()
+            }
+            else -> showVpnNeededDialog()
         }
     }
 
-    private fun showVpnStatusDialog() {
-        AlertDialog.Builder(this)
-            .setTitle(R.string.vpn_status_dialog_title)
-            .setPositiveButton(R.string.vpn_disconnect) { _, _ -> disconnect() }
-            .setNegativeButton(R.string.vpn_modify_account) { _, _ ->
-                disconnect()
-                binding.usernameInput.requestFocus()
-            }
-            .show()
-    }
-
     private fun onVpnState(state: ConnectionState) {
-        setVpnUi(state)
-    }
-
-    private fun setVpnUi(state: ConnectionState) {
         when (state) {
-            ConnectionState.CONNECTING -> {
-                vpnConnected = false
-                binding.vpnStatusText.text = getString(R.string.vpn_connecting)
-                binding.vpnCard.visibility = View.VISIBLE
-                binding.connectButton.isEnabled = false
-                binding.connectButton.text = getString(R.string.vpn_connecting)
-            }
             ConnectionState.CONNECTED -> {
                 vpnConnected = true
-                binding.vpnStatusText.text = getString(R.string.vpn_connected)
-                binding.vpnCard.visibility = View.GONE
+                setStatusText(getString(R.string.vpn_connected))
+                collapseCard()
             }
+            ConnectionState.CONNECTING -> setConnecting()
             else -> {
                 vpnConnected = false
-                binding.vpnStatusText.text = getString(R.string.vpn_disconnected)
-                binding.vpnCard.visibility = View.VISIBLE
-                binding.connectButton.isEnabled = true
-                binding.connectButton.text = getString(R.string.vpn_connect)
+                setDisconnected()
             }
+        }
+    }
+
+    private fun showCard() {
+        binding.vpnCard.visibility = View.VISIBLE
+    }
+
+    private fun collapseCard() {
+        binding.vpnCard.visibility = View.GONE
+    }
+
+    private fun setStatusText(text: String) {
+        binding.vpnStatusText.text = text
+    }
+
+    private fun setConnecting() {
+        setStatusText(getString(R.string.vpn_connecting))
+        binding.connectButton.isEnabled = false
+        binding.connectButton.text = getString(R.string.vpn_connecting)
+    }
+
+    private fun setDisconnected() {
+        setStatusText(getString(R.string.vpn_disconnected))
+        binding.connectButton.isEnabled = true
+        binding.connectButton.text = getString(R.string.login_save)
+    }
+
+    private fun isReachable(host: String): Boolean {
+        return try {
+            val process = Runtime.getRuntime().exec(arrayOf("ping", "-c", "1", "-W", "2", host))
+            process.inputStream.use { it.readBytes() }
+            process.errorStream.use { it.readBytes() }
+            process.waitFor() == 0
+        } catch (e: Exception) {
+            false
         }
     }
 
@@ -174,6 +247,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val VPN_REQUEST_CODE = 24
+        private const val INTRANET_IP = "10.96.8.9"
         private const val RUSTDESK_PACKAGE = "com.carriez.flutter_hbb"
         const val URL_AD = "https://account.patheagames.com:9252"
         const val URL_ITSM = "https://itsm.pathea.com"

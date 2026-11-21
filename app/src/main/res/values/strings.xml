@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">帕斯亚助手</string>
-    <string name="vpn_title">公司 VPN</string>
+    <string name="vpn_title">用户登录</string>
     <string name="vpn_connect">连接 VPN</string>
     <string name="vpn_disconnect">断开 VPN</string>
+    <string name="login_save">保存</string>
+    <string name="checking_network">检测网络…</string>
     <string name="vpn_connecting">连接中…</string>
     <string name="vpn_connected">已连接</string>
     <string name="vpn_disconnected">未连接</string>
@@ -20,11 +22,15 @@
     <string name="service_itsm_sub">工单与服务台</string>
     <string name="service_portal_sub">内部系统导航</string>
     <string name="service_wiki_sub">内部知识库</string>
-    <string name="service_rustdesk_sub">远程桌面（未安装请点此下载）</string>
+    <string name="service_rustdesk_sub">远程桌面</string>
     <string name="vpn_permission_hint">首次连接需要授予 VPN 权限</string>
     <string name="vpn_need_credential">请输入账号和密码</string>
     <string name="vpn_status_dialog_title">VPN 已连接</string>
     <string name="vpn_modify_account">修改账号</string>
+    <string name="vpn_needed_title">需要连接 VPN</string>
+    <string name="vpn_needed_message">当前不在内网，需要连接 VPN 才能访问内部服务</string>
+    <string name="intranet_title">已在内网</string>
+    <string name="intranet_message">当前已在内网，无需连接 VPN</string>
     <string name="rustdesk_not_installed">RustDesk 未安装</string>
     <string name="rustdesk_install_note">如未安装，请点击下方按钮下载安装：\nhttps://soft.pathea.com/software/rustdesk-1.5.3.apk</string>
     <string name="rustdesk_download">下载安装</string>
