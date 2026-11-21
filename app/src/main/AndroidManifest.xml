@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
 
     <application
         android:name=".App"
@@ -26,6 +29,12 @@
         <activity
             android:name=".WebActivity"
             android:exported="false" />
+
+        <!-- 覆盖库里的 OpenVPNService，补上前台服务类型（Android 14 要求） -->
+        <service
+            android:name="com.tim.openvpn.service.OpenVPNService"
+            android:foregroundServiceType="connectedDevice"
+            tools:replace="android:foregroundServiceType" />
     </application>
 
 </manifest>
