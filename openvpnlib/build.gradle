@@ -26,6 +26,7 @@ android {
 
 dependencies {
     api 'io.github.tim06:basevpnprotocols:1.1.0'
+    implementation 'io.github.tim06:vpnprotocolsnotification:1.1.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'

@@ -53,12 +53,19 @@ public class OpenVPNThreadv3 extends ClientAPI_OpenVPNClient implements Runnable
 
     @Override
     public ClientAPI_Status provide_creds(ClientAPI_ProvideCreds creds) {
-        if (creds != null) {
-            creds.setUsername(username == null ? "" : username);
-            creds.setPassword(password == null ? "" : password);
-        }
         ClientAPI_Status status = new ClientAPI_Status();
-        status.setError(false);
+        try {
+            if (creds != null) {
+                creds.setUsername(username == null ? "" : username);
+                creds.setPassword(password == null ? "" : password);
+            }
+            status.setError(false);
+            status.setStatus("SUCCESS");
+        } catch (Throwable t) {
+            status.setError(true);
+            status.setStatus("ERROR");
+            status.setMessage(t.toString());
+        }
         return status;
     }
 
