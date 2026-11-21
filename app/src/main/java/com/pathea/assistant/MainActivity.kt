@@ -1,20 +1,26 @@
 package com.pathea.assistant
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Intent
 import android.net.VpnService
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.pathea.assistant.databinding.ActivityMainBinding
-import de.blinkt.openvpn.core.ConnectionStatus
-import de.blinkt.openvpn.core.VpnStatus
+import com.tim.basevpn.state.ConnectionState
+import com.tim.openvpn.connection.OpenVPNVpnConnection
+import java.io.File
 
-class MainActivity : AppCompatActivity(), VpnStatus.StateListener {
+class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var credentialStore: CredentialStore
     private var pendingConnect: Pair<String, String>? = null
+    private var vpnConnection: OpenVPNVpnConnection? = null
+    private var lastVpnState: ConnectionState? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,13 +36,6 @@ class MainActivity : AppCompatActivity(), VpnStatus.StateListener {
         binding.shortcutAd.setOnClickListener { openWeb(getString(R.string.service_ad), URL_AD) }
         binding.shortcutItsm.setOnClickListener { openWeb(getString(R.string.service_itsm), URL_ITSM) }
         binding.shortcutPortal.setOnClickListener { openWeb(getString(R.string.service_portal), URL_PORTAL) }
-
-        VpnStatus.addStateListener(this)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        VpnStatus.removeStateListener(this)
     }
 
     private fun onConnectClick() {
@@ -68,60 +67,90 @@ class MainActivity : AppCompatActivity(), VpnStatus.StateListener {
     }
 
     private fun doConnect(username: String, password: String) {
-        setConnecting()
+        setVpnUi(ConnectionState.CONNECTING)
         try {
             VpnHelper.connect(this, username, password)
         } catch (t: Throwable) {
-            setDisconnected()
+            setVpnUi(ConnectionState.DISCONNECTED)
             Toast.makeText(
                 this,
                 "VPN启动失败: ${t.javaClass.simpleName}: ${t.message}",
                 Toast.LENGTH_LONG
             ).show()
+            return
         }
+        // 监听真实连接状态
+        vpnConnection = OpenVPNVpnConnection(this) { state ->
+            runOnUiThread { onVpnState(state) }
+        }
+        vpnConnection?.attachListener()
     }
 
     private fun disconnect() {
+        vpnConnection?.stopServiceIfNeed(true)
+        vpnConnection = null
         VpnHelper.disconnect(this)
-        setDisconnected()
+        setVpnUi(ConnectionState.DISCONNECTED)
     }
 
-    override fun updateState(state: String?, logmessage: String?, resid: Int, level: ConnectionStatus?) {
-        runOnUiThread {
-            when (level) {
-                ConnectionStatus.LEVEL_CONNECTED -> setConnected()
-                ConnectionStatus.LEVEL_AUTH_FAILED -> {
-                    setDisconnected()
-                    Toast.makeText(this, R.string.vpn_auth_failed, Toast.LENGTH_LONG).show()
+    private fun onVpnState(state: ConnectionState) {
+        setVpnUi(state)
+        when (state) {
+            ConnectionState.PERMISSION_NOT_GRANTED ->
+                Toast.makeText(this, R.string.vpn_permission_hint, Toast.LENGTH_LONG).show()
+            ConnectionState.DISCONNECTED -> {
+                if (lastVpnState == ConnectionState.CONNECTING) {
+                    showVpnError()
                 }
-                ConnectionStatus.LEVEL_CONNECTING_NO_SERVER_REPLY_YET,
-                ConnectionStatus.LEVEL_CONNECTING_SERVER_REPLIED,
-                ConnectionStatus.LEVEL_START -> setConnecting()
-                else -> setDisconnected()
             }
+            else -> Unit
         }
+        lastVpnState = state
+    }
+
+    private fun showVpnError() {
+        Handler(Looper.getMainLooper()).postDelayed({
+            val logFile = File(getExternalFilesDir(null) ?: filesDir, "openvpn.log")
+            val tail = if (logFile.exists()) {
+                logFile.readLines().takeLast(25).joinToString("\n")
+            } else {
+                ""
+            }
+            val msg = if (tail.isBlank()) {
+                "（日志为空，说明在配置解析阶段就失败了）"
+            } else {
+                tail
+            }
+            AlertDialog.Builder(this)
+                .setTitle("VPN 连接失败")
+                .setMessage(msg)
+                .setPositiveButton("关闭", null)
+                .show()
+        }, 1200)
     }
 
     private fun isVpnActive(): Boolean {
         return binding.connectButton.text.toString() == getString(R.string.vpn_disconnect)
     }
 
-    private fun setConnecting() {
-        binding.vpnStatusText.text = getString(R.string.vpn_connecting)
-        binding.connectButton.isEnabled = false
-        binding.connectButton.text = getString(R.string.vpn_connecting)
-    }
-
-    private fun setConnected() {
-        binding.vpnStatusText.text = getString(R.string.vpn_connected)
-        binding.connectButton.isEnabled = true
-        binding.connectButton.text = getString(R.string.vpn_disconnect)
-    }
-
-    private fun setDisconnected() {
-        binding.vpnStatusText.text = getString(R.string.vpn_disconnected)
-        binding.connectButton.isEnabled = true
-        binding.connectButton.text = getString(R.string.vpn_connect)
+    private fun setVpnUi(state: ConnectionState) {
+        when (state) {
+            ConnectionState.CONNECTING -> {
+                binding.vpnStatusText.text = getString(R.string.vpn_connecting)
+                binding.connectButton.isEnabled = false
+                binding.connectButton.text = getString(R.string.vpn_connecting)
+            }
+            ConnectionState.CONNECTED -> {
+                binding.vpnStatusText.text = getString(R.string.vpn_connected)
+                binding.connectButton.isEnabled = true
+                binding.connectButton.text = getString(R.string.vpn_disconnect)
+            }
+            else -> {
+                binding.vpnStatusText.text = getString(R.string.vpn_disconnected)
+                binding.connectButton.isEnabled = true
+                binding.connectButton.text = getString(R.string.vpn_connect)
+            }
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

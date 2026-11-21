@@ -19,5 +19,4 @@
     <string name="service_portal_sub">内部系统导航</string>
     <string name="vpn_permission_hint">首次连接需要授予 VPN 权限</string>
     <string name="vpn_need_credential">请输入账号和密码</string>
-    <string name="vpn_auth_failed">认证失败，请检查账号密码是否正确</string>
 </resources>

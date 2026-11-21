@@ -44,6 +44,6 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
 
-    // OpenVPN 2.x 核心库（ics-openvpn，原生支持用户名密码 + 标准 OpenVPN 配置）
-    implementation 'com.github.schwabe:ics-openvpn:v0.6.73'
+    // OpenVPN 3 库（本地 fork，实现 provide_creds 凭据回调）
+    implementation project(':openvpnlib')
 }

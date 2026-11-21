@@ -1,11 +1,11 @@
 package com.pathea.assistant
 
+import android.app.Application
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
-import de.blinkt.openvpn.core.ICSOpenVPNApplication
 
-class App : ICSOpenVPNApplication() {
+class App : Application() {
 
     override fun onCreate() {
         super.onCreate()
