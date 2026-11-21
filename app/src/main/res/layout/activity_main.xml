@@ -411,5 +411,20 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- RustDesk 下载链接备注 -->
+        <TextView
+            android:id="@+id/rustdeskDownloadNote"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginBottom="20dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:text="@string/rustdesk_download_link"
+            android:textColor="@color/accent"
+            android:textSize="12sp" />
+
     </LinearLayout>
 </ScrollView>

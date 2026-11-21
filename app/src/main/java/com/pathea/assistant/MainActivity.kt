@@ -37,6 +37,7 @@ class MainActivity : AppCompatActivity() {
         binding.shortcutPortal.setOnClickListener { openWeb(getString(R.string.service_portal), URL_PORTAL) }
         binding.shortcutWiki.setOnClickListener { openWeb(getString(R.string.service_wiki), URL_WIKI) }
         binding.shortcutRustdesk.setOnClickListener { onRustdeskClick() }
+        binding.rustdeskDownloadNote.setOnClickListener { openWeb("RustDesk 下载", RUSTDESK_URL) }
     }
 
     private fun onConnectClick() {

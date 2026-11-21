@@ -28,5 +28,6 @@
     <string name="rustdesk_not_installed">RustDesk 未安装</string>
     <string name="rustdesk_install_note">如未安装，请点击下方按钮下载安装：\nhttps://soft.pathea.com/software/rustdesk-1.5.3.apk</string>
     <string name="rustdesk_download">下载安装</string>
+    <string name="rustdesk_download_link">如无法跳转请点此下载：https://soft.pathea.com/software/rustdesk-1.5.3.apk</string>
     <string name="download_started">开始下载，下载完成后点击安装</string>
 </resources>
