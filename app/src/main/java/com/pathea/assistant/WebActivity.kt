@@ -1,14 +1,20 @@
 package com.pathea.assistant
 
 import android.annotation.SuppressLint
+import android.app.DownloadManager
+import android.content.Context
+import android.net.Uri
 import android.net.http.SslError
 import android.os.Bundle
+import android.webkit.DownloadListener
 import android.webkit.SslErrorHandler
+import android.webkit.URLUtil
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.pathea.assistant.databinding.ActivityWebBinding
 import org.json.JSONObject
@@ -75,6 +81,22 @@ class WebActivity : AppCompatActivity() {
                     autoFillCredentials()
                 }
             }
+            setDownloadListener(DownloadListener { url, userAgent, contentDisposition, mimetype, _ ->
+                try {
+                    val request = DownloadManager.Request(Uri.parse(url))
+                    request.setMimeType(mimetype)
+                    request.addRequestHeader("User-Agent", userAgent)
+                    request.setTitle(URLUtil.guessFileName(url, contentDisposition, mimetype))
+                    request.setNotificationVisibility(
+                        DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED
+                    )
+                    val dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+                    dm.enqueue(request)
+                    Toast.makeText(this, R.string.download_started, Toast.LENGTH_LONG).show()
+                } catch (e: Exception) {
+                    Toast.makeText(this, "下载失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            })
             loadUrl(url)
         }
     }

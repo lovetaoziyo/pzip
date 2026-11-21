@@ -14,9 +14,19 @@
     <string name="service_ad">AD 账号密码管理</string>
     <string name="service_itsm">IT 服务支持</string>
     <string name="service_portal">Pathea 门户导航</string>
+    <string name="service_wiki">Wiki 知识库</string>
+    <string name="service_rustdesk">RustDesk 远程协助</string>
     <string name="service_ad_sub">账号密码自助管理</string>
     <string name="service_itsm_sub">工单与服务台</string>
     <string name="service_portal_sub">内部系统导航</string>
+    <string name="service_wiki_sub">内部知识库</string>
+    <string name="service_rustdesk_sub">远程桌面（未安装请点此下载）</string>
     <string name="vpn_permission_hint">首次连接需要授予 VPN 权限</string>
     <string name="vpn_need_credential">请输入账号和密码</string>
+    <string name="vpn_status_dialog_title">VPN 已连接</string>
+    <string name="vpn_modify_account">修改账号</string>
+    <string name="rustdesk_not_installed">RustDesk 未安装</string>
+    <string name="rustdesk_install_note">如未安装，请点击下方按钮下载安装：\nhttps://soft.pathea.com/software/rustdesk-1.5.3.apk</string>
+    <string name="rustdesk_download">下载安装</string>
+    <string name="download_started">开始下载，下载完成后点击安装</string>
 </resources>
