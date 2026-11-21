@@ -8,7 +8,7 @@
     <string name="checking_network">检测网络…</string>
     <string name="vpn_connecting">连接中…</string>
     <string name="vpn_connected">已连接</string>
-    <string name="vpn_disconnected">未连接</string>
+    <string name="vpn_disconnected">断开</string>
     <string name="username">账号</string>
     <string name="password">密码</string>
     <string name="remember_password">记住密码</string>

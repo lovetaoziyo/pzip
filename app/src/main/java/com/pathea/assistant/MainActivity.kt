@@ -30,6 +30,7 @@ class MainActivity : AppCompatActivity() {
     private var credentialsSaved = false
     private var pingJob: Job? = null
     private var vpnDialogShowing = false
+    private var initialPing = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,6 +83,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun startPeriodicPing() {
         pingJob?.cancel()
+        initialPing = true
         pingJob = lifecycleScope.launch {
             while (true) {
                 pingOnce()
@@ -110,10 +112,12 @@ class MainActivity : AppCompatActivity() {
             vpnDialogShowing = false
         } else {
             setStatusText(getString(R.string.vpn_disconnected))
-            if (!vpnDialogShowing) {
+            // 仅首次打开不在内网时主动提示；后续 ping 不通只显示断开，不弹窗
+            if (initialPing && !vpnDialogShowing) {
                 showVpnNeededDialog()
             }
         }
+        initialPing = false
     }
 
     private fun showVpnNeededDialog() {
