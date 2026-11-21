@@ -63,7 +63,17 @@ class MainActivity : AppCompatActivity() {
 
     private fun doConnect(username: String, password: String) {
         setVpnUi(ConnectionState.CONNECTING)
-        VpnHelper.connect(this, username, password)
+        try {
+            VpnHelper.connect(this, username, password)
+        } catch (t: Throwable) {
+            setVpnUi(ConnectionState.DISCONNECTED)
+            Toast.makeText(
+                this,
+                "VPN启动失败: ${t.javaClass.simpleName}: ${t.message}",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
         // 监听真实连接状态
         vpnConnection = OpenVPNVpnConnection(this) { state ->
             runOnUiThread { onVpnState(state) }
