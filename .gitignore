@@ -1,24 +1,10 @@
-# Dependencies
-node_modules/
-
-# Build output
-dist/
-dist-ssr/
-src-tauri/target/
-
-# 7-Zip download staging area (source packages; final binaries live in src-tauri/binaries/)
-vendor/
-
-# Secrets — never commit
-.git-credentials
-*.token
-.env
-
-# Editor / OS
-.vscode/
-.idea/
+*.iml
+.gradle/
+/local.properties
+/.idea/
 .DS_Store
-Thumbs.db
-
-# Logs
-*.log
+/build
+/captures
+.externalNativeBuild
+.cxx
+app/build/
