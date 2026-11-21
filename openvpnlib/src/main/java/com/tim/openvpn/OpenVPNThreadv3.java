@@ -91,12 +91,16 @@ public class OpenVPNThreadv3 extends ClientAPI_OpenVPNClient implements Runnable
 
     private void logError(String message) {
         OpenVPNLogger.e("OpenVPNThreadv3", message);
+        appendLog("ERROR: " + message);
+    }
+
+    private void appendLog(String message) {
         try {
             if (mService instanceof android.content.Context) {
                 android.content.Context ctx = (android.content.Context) mService;
                 java.io.File dir = ctx.getExternalFilesDir(null);
                 if (dir != null) {
-                    java.io.File f = new java.io.File(dir, "openvpn-error.log");
+                    java.io.File f = new java.io.File(dir, "openvpn.log");
                     java.io.FileWriter w = new java.io.FileWriter(f, true);
                     w.append(message).append("\n");
                     w.close();
@@ -304,6 +308,7 @@ public class OpenVPNThreadv3 extends ClientAPI_OpenVPNClient implements Runnable
             logmsg = logmsg.substring(0, logmsg.length() - 1);
 
         OpenVPNLogger.d("OpenVPNThreadv3", logmsg);
+        appendLog(logmsg);
     }
 
     @Override
@@ -339,9 +344,11 @@ public class OpenVPNThreadv3 extends ClientAPI_OpenVPNClient implements Runnable
             }
             mService.updateStateThread(state);
             OpenVPNLogger.d("OpenVPNThreadv3", name + info);
+            appendLog("EVENT: " + name + " " + info);
         }
         if (event.getError()) {
             OpenVPNLogger.e("OpenVPNThreadv3", String.format("EVENT(Error): %s: %s", name, info));
+            appendLog("EVENT_ERROR: " + name + ": " + info);
         }
     }
 

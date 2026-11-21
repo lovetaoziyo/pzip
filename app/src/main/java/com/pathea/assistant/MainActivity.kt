@@ -85,17 +85,18 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread { onVpnState(state) }
         }
         vpnConnection?.attachListener()
-        // 延迟检查是否有底层错误
+        // 延迟读取连接日志（20 秒后弹窗显示，便于定位卡在哪一步）
         Handler(Looper.getMainLooper()).postDelayed({
-            val errFile = File(getExternalFilesDir(null) ?: filesDir, "openvpn-error.log")
-            if (errFile.exists() && errFile.length() > 0) {
+            val logFile = File(getExternalFilesDir(null) ?: filesDir, "openvpn.log")
+            if (logFile.exists() && logFile.length() > 0) {
+                val tail = logFile.readLines().takeLast(30).joinToString("\n")
                 AlertDialog.Builder(this)
-                    .setTitle("OpenVPN 底层错误")
-                    .setMessage(errFile.readText())
+                    .setTitle("OpenVPN 连接日志")
+                    .setMessage(tail)
                     .setPositiveButton("关闭", null)
                     .show()
             }
-        }, 4000)
+        }, 20000)
     }
 
     private fun disconnect() {
