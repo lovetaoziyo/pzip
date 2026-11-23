@@ -53,7 +53,7 @@ class MainActivity : AppCompatActivity() {
         binding.shortcutPortal.setOnClickListener { openWeb(getString(R.string.service_portal), URL_PORTAL) }
         binding.shortcutWiki.setOnClickListener { openWeb(getString(R.string.service_wiki), URL_WIKI) }
         binding.shortcutRustdesk.setOnClickListener { onRustdeskClick() }
-        binding.rustdeskDownloadNote.setOnClickListener { openWeb("RustDesk 下载", RUSTDESK_URL) }
+        binding.rustdeskDownloadNote.setOnClickListener { openWeb(getString(R.string.rustdesk_download_title), RUSTDESK_URL) }
 
         if (credentialsSaved) {
             collapseCard()
@@ -162,7 +162,7 @@ class MainActivity : AppCompatActivity() {
             setDisconnected()
             Toast.makeText(
                 this,
-                "VPN启动失败: ${t.javaClass.simpleName}: ${t.message}",
+                getString(R.string.vpn_start_failed, t.javaClass.simpleName, t.message),
                 Toast.LENGTH_LONG
             ).show()
             return
@@ -200,7 +200,7 @@ class MainActivity : AppCompatActivity() {
                     .setTitle(R.string.intranet_title)
                     .setMessage(R.string.intranet_message)
                     .setPositiveButton(R.string.vpn_modify_account) { _, _ -> showCard() }
-                    .setNegativeButton("关闭", null)
+                    .setNegativeButton(R.string.close, null)
                     .show()
             }
             else -> showVpnNeededDialog()
@@ -271,9 +271,9 @@ class MainActivity : AppCompatActivity() {
                 .setTitle(R.string.rustdesk_not_installed)
                 .setMessage(R.string.rustdesk_install_note)
                 .setPositiveButton(R.string.rustdesk_download) { _, _ ->
-                    openWeb("RustDesk 下载", RUSTDESK_URL)
+                    openWeb(getString(R.string.rustdesk_download_title), RUSTDESK_URL)
                 }
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.cancel, null)
                 .show()
         }
     }

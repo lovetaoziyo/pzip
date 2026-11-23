@@ -94,7 +94,7 @@ class WebActivity : AppCompatActivity() {
                     dm.enqueue(request)
                     Toast.makeText(this@WebActivity, R.string.download_started, Toast.LENGTH_LONG).show()
                 } catch (e: Exception) {
-                    Toast.makeText(this@WebActivity, "下载失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@WebActivity, getString(R.string.download_failed, e.message), Toast.LENGTH_SHORT).show()
                 }
             })
             loadUrl(url)

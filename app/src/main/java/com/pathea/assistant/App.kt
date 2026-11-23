@@ -21,7 +21,7 @@ class App : Application() {
             Handler(Looper.getMainLooper()).post {
                 Toast.makeText(
                     this,
-                    "崩溃: ${throwable.javaClass.simpleName}: ${throwable.message}",
+                    getString(R.string.crash_message, throwable.javaClass.simpleName, throwable.message),
                     Toast.LENGTH_LONG
                 ).show()
             }

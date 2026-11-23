@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Pathea Assistant</string>
+    <string name="vpn_title">User Login</string>
+    <string name="vpn_connect">Connect VPN</string>
+    <string name="vpn_disconnect">Disconnect VPN</string>
+    <string name="login_save">Save</string>
+    <string name="checking_network">Checking network…</string>
+    <string name="vpn_connecting">Connecting…</string>
+    <string name="vpn_connected">Connected</string>
+    <string name="vpn_disconnected">Disconnected</string>
+    <string name="username">Account</string>
+    <string name="password">Password</string>
+    <string name="remember_password">Remember password</string>
+    <string name="internal_services">Internal Services</string>
+    <string name="service_ad">AD Account Management</string>
+    <string name="service_itsm">IT Service Support</string>
+    <string name="service_portal">Pathea Portal</string>
+    <string name="service_wiki">Wiki</string>
+    <string name="service_rustdesk">RustDesk Remote Desktop</string>
+    <string name="service_ad_sub">Self-service account management</string>
+    <string name="service_itsm_sub">Tickets &amp; Service Desk</string>
+    <string name="service_portal_sub">Internal system navigation</string>
+    <string name="service_wiki_sub">Internal knowledge base</string>
+    <string name="service_rustdesk_sub">Remote Desktop</string>
+    <string name="vpn_permission_hint">Grant VPN permission on first connect</string>
+    <string name="vpn_need_credential">Please enter account and password</string>
+    <string name="vpn_status_dialog_title">VPN Connected</string>
+    <string name="vpn_modify_account">Modify Account</string>
+    <string name="vpn_needed_title">VPN Required</string>
+    <string name="vpn_needed_message">Not on the intranet. Connect VPN to access internal services.</string>
+    <string name="intranet_title">On Intranet</string>
+    <string name="intranet_message">You are on the intranet, no VPN needed.</string>
+    <string name="rustdesk_not_installed">RustDesk Not Installed</string>
+    <string name="rustdesk_install_note">If not installed, click below to download and install:\nhttps://soft.pathea.com/software/rustdesk-1.5.3.apk</string>
+    <string name="rustdesk_download">Download &amp; Install</string>
+    <string name="rustdesk_download_link">Click to download if it does not open: https://soft.pathea.com/software/rustdesk-1.5.3.apk</string>
+    <string name="download_started">Download started. Install when complete.</string>
+    <string name="close">Close</string>
+    <string name="cancel">Cancel</string>
+    <string name="rustdesk_download_title">RustDesk Download</string>
+    <string name="vpn_start_failed">VPN failed to start: %1$s: %2$s</string>
+    <string name="download_failed">Download failed: %1$s</string>
+    <string name="crash_message">Crash: %1$s: %2$s</string>
+</resources>
